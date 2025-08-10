@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -34,9 +34,19 @@ import {
   BarChart3,
   RefreshCw,
   Download,
+  TriangleAlert,
 } from "lucide-react";
 import { toast } from "sonner";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+  DialogFooter,
+} from "@/components/ui/dialog";
 interface DataPreprocessingProps {
   data: any;
   filename: string;
@@ -98,7 +108,7 @@ const outlierMethods = [
   },
 ];
 
-export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
+function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
   const [selectedColumn, setSelectedColumn] = useState("");
   const [fillMethod, setFillMethod] = useState("");
   const [customValue, setCustomValue] = useState("");
@@ -123,15 +133,14 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
     };
 
     setPreprocessingHistory([...preprocessingHistory, operation]);
-    toast("Null Values Filled",{
- 
+    toast("Null Values Filled", {
       description: `Applied ${fillMethod} method to ${selectedColumn} column`,
     });
   };
 
   const handleRemoveOutliers = () => {
     if (!selectedColumn || !outlierMethod) {
-      toast("Missing Parameters",{
+      toast("Missing Parameters", {
         description: "Please select both column and outlier detection method",
       });
       return;
@@ -146,7 +155,7 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
     };
 
     setPreprocessingHistory([...preprocessingHistory, operation]);
-    toast( "Outliers Removed",{
+    toast("Outliers Removed", {
       description: `Applied ${outlierMethod} method to ${selectedColumn} column`,
     });
   };
@@ -155,15 +164,13 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
     setPreprocessingHistory(
       preprocessingHistory.filter((op) => op.id !== operationId)
     );
-    toast("Operation Undone",{
-
+    toast("Operation Undone", {
       description: "Preprocessing step has been reverted",
     });
   };
 
   const handleExportPreprocessed = () => {
-    toast("Export Preprocessed Data",{
-
+    toast("Export Preprocessed Data", {
       description:
         "Preprocessed dataset will be exported (API integration needed)",
     });
@@ -178,20 +185,9 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Data Preprocessing</h1>
           <p className="text-muted-foreground mt-1">
             Clean and prepare data from {filename}
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportPreprocessed}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export Preprocessed
-          </Button>
         </div>
       </div>
 
@@ -304,10 +300,45 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
             {/* Fill Missing Values */}
             <Card className="data-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wrench className="w-4 h-4" />
-                  Fill Missing Values
-                </CardTitle>
+                <div className="flex justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4" />
+                    Fill Missing Values
+                  </CardTitle>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant={"destructive"} size={"sm"}>
+                        <AlertTriangle className="w-4 h-4" />
+                        Drop
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="glass">
+                      <DialogHeader>
+                        <DialogTitle className="mb-6">
+                          Are you absolutely sure?
+                        </DialogTitle>
+                        <Label>Custom Value</Label>
+                        <Input
+                          placeholder="Enter custom value"
+                          value={customValue}
+                          type="number"
+                          onChange={(e) => setCustomValue(e.target.value)}
+                          max={10}
+                        />
+                      </DialogHeader>
+
+                      <DialogFooter className="sm:justify-start">
+                        <Button type="button">Apply</Button>
+                        <DialogClose asChild>
+                          <Button type="button" variant="secondary">
+                            Close
+                          </Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -444,7 +475,7 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4" />
-                  Outlier Summary
+                  Outlier Summary(IQR)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -468,6 +499,12 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
           </div>
         </TabsContent>
 
+        {/* /NOTE: Duplicates Filtering
+                  Remove exact duplicates
+                  df.drop_duplicates()
+                  Subset duplicates
+                  df.drop_duplicates(subset=["col1", "col2"]) */}
+                  
         <TabsContent value="duplicates" className="space-y-6">
           <Card className="data-card">
             <CardHeader className="relative">
@@ -475,7 +512,12 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
               <CardDescription>
                 Identify and remove duplicate rows
               </CardDescription>
-              <Button onClick={()=>{alert("Remove Duplicates")}} className="right-6 top-0 absolute bg-[var(--warning)]">
+              <Button
+                onClick={() => {
+                  alert("Remove Duplicates");
+                }}
+                className="right-6 top-0 absolute bg-[var(--warning)]"
+              >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Remove Duplicates
               </Button>
@@ -544,6 +586,13 @@ export function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
           </Card>
         </TabsContent>
       </Tabs>
+      <div className="float-end">
+        <Button size="sm" onClick={handleExportPreprocessed}>
+          <Download className="w-4 h-4 mr-2" />
+          Export Preprocessed
+        </Button>
+      </div>
     </div>
   );
 }
+export default DataPreprocessing;

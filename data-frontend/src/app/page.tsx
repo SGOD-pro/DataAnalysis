@@ -109,11 +109,10 @@ export default function Home() {
 
   return (
     <>
-
       <div className="space-y-6 z-10">
         <div className="flex items-center justify-center gap-2">
           <LineChart className="w-7 h-7 text-primary" />
-          <h1 className="text-4xl font-bold gradient-text">ExploraData</h1>
+          <h1 className="text-4xl font-bold gradient-text">Vizora</h1>
         </div>
         {/* Hero Section */}
         <div className="text-center space-y-4">

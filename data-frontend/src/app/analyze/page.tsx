@@ -18,17 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Calculator,
   TrendingUp,
-  BarChart3,
   Target,
   Download,
   CheckCircle,
@@ -36,6 +27,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
 
 interface AnalysisSectionProps {
   data: any;
@@ -98,41 +90,6 @@ const mockTestResults = {
   },
 };
 
-const descriptiveStats = [
-  {
-    variable: "age",
-    count: 1000,
-    mean: 32.5,
-    median: 31.0,
-    std: 8.2,
-    min: 22,
-    max: 58,
-    q1: 27,
-    q3: 38,
-  },
-  {
-    variable: "salary",
-    count: 992,
-    mean: 65750,
-    median: 62000,
-    std: 18200,
-    min: 35000,
-    max: 120000,
-    q1: 52000,
-    q3: 78000,
-  },
-  {
-    variable: "experience",
-    count: 995,
-    mean: 6.8,
-    median: 5.5,
-    std: 4.1,
-    min: 0,
-    max: 25,
-    q1: 3,
-    q3: 9,
-  },
-];
 
 export default function AnalysisSection({
   data,
@@ -253,57 +210,13 @@ export default function AnalysisSection({
 
       <Tabs defaultValue="descriptive" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="descriptive">Descriptive Statistics</TabsTrigger>
+          <TabsTrigger value="descriptive">Stationarity Test</TabsTrigger>
           <TabsTrigger value="tests">Hypothesis Testing</TabsTrigger>
           <TabsTrigger value="correlation">Correlation Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="descriptive" className="space-y-6">
-          <Card className="data-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Descriptive Statistics
-              </CardTitle>
-              <CardDescription>
-                Summary statistics for numerical variables
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Variable</TableHead>
-                    <TableHead>Count</TableHead>
-                    <TableHead>Mean</TableHead>
-                    <TableHead>Median</TableHead>
-                    <TableHead>Std Dev</TableHead>
-                    <TableHead>Min</TableHead>
-                    <TableHead>Q1</TableHead>
-                    <TableHead>Q3</TableHead>
-                    <TableHead>Max</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {descriptiveStats.map((stat) => (
-                    <TableRow key={stat.variable}>
-                      <TableCell className="font-medium">
-                        {stat.variable}
-                      </TableCell>
-                      <TableCell>{stat.count.toLocaleString()}</TableCell>
-                      <TableCell>{stat.mean.toLocaleString()}</TableCell>
-                      <TableCell>{stat.median.toLocaleString()}</TableCell>
-                      <TableCell>{stat.std.toLocaleString()}</TableCell>
-                      <TableCell>{stat.min.toLocaleString()}</TableCell>
-                      <TableCell>{stat.q1.toLocaleString()}</TableCell>
-                      <TableCell>{stat.q3.toLocaleString()}</TableCell>
-                      <TableCell>{stat.max.toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+       <DEscriptiveStsts/>
         </TabsContent>
 
         <TabsContent value="tests" className="space-y-6">

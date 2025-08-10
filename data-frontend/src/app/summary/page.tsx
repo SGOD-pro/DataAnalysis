@@ -30,37 +30,23 @@ import {
   Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
-import { DataPreprocessing } from "./DataPreprocessing";
+import DataPreprocessing from "./DataPreprocessing";
+import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
+import { useRouter, useSearchParams } from "next/navigation";
+import UniqueValues from "./UniqueValues";
 
 interface DataSummaryProps {
   data: any;
   filename: string;
 }
 
-const data = {
-  rows: 1000,
-  columns: 15,
-  preview: [
-    { id: 1, name: "John Doe", age: 28, city: "New York", salary: 75000 },
-    {
-      id: 2,
-      name: "Jane Smith",
-      age: 34,
-      city: "San Francisco",
-      salary: 95000,
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      age: 42,
-      city: "Chicago",
-      salary: 68000,
-    },
-  ],
-};
-export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+const data = {'rows': 6607, 'columns': 20, 'missing_percentage': 18.0}
 
+
+export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
+  const router = useRouter();
   const handleExportSummary = () => {
     toast("Export Summary", {
       description:
@@ -90,13 +76,14 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
 
   // Mock column information for demonstration
   const columnTypes = [
-    { name: "id", type: "integer", nulls: 0, unique: 1000 },
-    { name: "name", type: "string", nulls: 0, unique: 995 },
-    { name: "age", type: "integer", nulls: 12, unique: 45 },
-    { name: "city", type: "string", nulls: 5, unique: 25 },
-    { name: "salary", type: "float", nulls: 8, unique: 856 },
+    { name: "Teacher_Quality", type: "categorical", nulls: 78, unique: 3 },
+    { name: "School_Type", type: "categorical", nulls: 0, unique: 2 },
+    { name: "Peer_Influence", type: "categorical", nulls: 0, unique: 3 },
+    { name: "Physical_Activity", type: "number", nulls: 0, unique: 7 },
+    { name: "Learning_Disabilities", type: "categorical", nulls: 0, unique: 2 },
+    { name: "Gender", type: "categorical", nulls: 0, unique: 2 },
+    { name: "Exam_Score", type: "number", nulls: 0, unique: 45 },
   ];
-
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "integer":
@@ -129,7 +116,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
     <div className="mx-auto w-4xl flex justify-center">
       <div className="space-y-6 w-full">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <header className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Data Summary</h1>
             <p className="text-muted-foreground mt-1">Overview of {filename}</p>
@@ -139,15 +126,18 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
               <Download className="w-4 h-4 mr-2" />
               Export Summary
             </Button>
-            <Button variant="outline" size="sm" onClick={handleViewRawData}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/raw-data")}
+            >
               <Eye className="w-4 h-4 mr-2" />
               View Raw Data
             </Button>
           </div>
-        </div>
+        </header>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-
+        <Tabs className="w-full" defaultValue={tab ?? "overview"}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="overview">Data Overview</TabsTrigger>
             <TabsTrigger value="preprocessing">Data Preprocessing</TabsTrigger>
@@ -197,7 +187,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-secondary-foreground">
-                    2.1%
+                    {data.missing_percentage}%
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Overall completeness
@@ -272,46 +262,10 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
               </CardContent>
             </Card>
 
-            {/* Data Preview */}
-            <Card className="data-card">
-              <CardHeader>
-                <CardTitle>Data Preview</CardTitle>
-                <CardDescription>
-                  First few rows of your dataset
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {Object.keys(data.preview[0] || {}).map((key) => (
-                          <TableHead key={key} className="capitalize">
-                            {key}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.preview.map((row: any, index: number) => (
-                        <TableRow key={index}>
-                          {Object.values(row).map(
-                            (value: any, cellIndex: number) => (
-                              <TableCell
-                                key={cellIndex}
-                                className="font-mono text-sm"
-                              >
-                                {value?.toString() || "—"}
-                              </TableCell>
-                            )
-                          )}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            {/* DEecriptiveStats Information */}
+            <DEscriptiveStsts />
+
+            <UniqueValues />
           </TabsContent>
 
           <TabsContent value="preprocessing">
