@@ -34,6 +34,7 @@ import DataPreprocessing from "./DataPreprocessing";
 import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
 import { useRouter, useSearchParams } from "next/navigation";
 import UniqueValues from "./UniqueValues";
+import { columnTypes } from "@/data";
 
 interface DataSummaryProps {
   data: any;
@@ -75,15 +76,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
   }
 
   // Mock column information for demonstration
-  const columnTypes = [
-    { name: "Teacher_Quality", type: "categorical", nulls: 78, unique: 3 },
-    { name: "School_Type", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Peer_Influence", type: "categorical", nulls: 0, unique: 3 },
-    { name: "Physical_Activity", type: "number", nulls: 0, unique: 7 },
-    { name: "Learning_Disabilities", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Gender", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Exam_Score", type: "number", nulls: 0, unique: 45 },
-  ];
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "integer":
@@ -146,7 +139,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
           <TabsContent value="overview" className="space-y-6">
             {/* Dataset Overview Cards */}
             <div className="grid md:grid-cols-3 gap-4">
-              <Card className="data-card">
+              <Card className="data-card py-4 gap-0">
                 <CardHeader className="">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <FileText className="w-4 h-4 text-primary" />
@@ -163,7 +156,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardContent>
               </Card>
 
-              <Card className="data-card">
+              <Card className="data-card py-4 gap-0">
                 <CardHeader className="">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Database className="w-4 h-4 text-accent" />
@@ -178,7 +171,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardContent>
               </Card>
 
-              <Card className="data-card">
+              <Card className="data-card py-4 gap-0">
                 <CardHeader className="">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Percent className="w-4 h-4 text-secondary-foreground" />

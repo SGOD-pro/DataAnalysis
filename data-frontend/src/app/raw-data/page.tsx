@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import {
   Table,
@@ -14,27 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-const data = {
-  rows: 1000,
-  columns: 15,
-  preview: [
-    { id: 1, name: "John Doe", age: 28, city: "New York", salary: 75000 },
-    {
-      id: 2,
-      name: "Jane Smith",
-      age: 34,
-      city: "San Francisco",
-      salary: 95000,
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      age: 42,
-      city: "Chicago",
-      salary: 68000,
-    },
-  ],
-};
+import { default_data as data } from "@/data";
+
 function RawData() {
   const filename = "Demo Data";
   return (
@@ -55,7 +37,7 @@ function RawData() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {Object.keys(data.preview[0] || {}).map((key) => (
+                  {Object.keys(data[0] || {}).map((key) => (
                     <TableHead key={key} className="capitalize">
                       {key}
                     </TableHead>
@@ -63,7 +45,7 @@ function RawData() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.preview.map((row: any, index: number) => (
+                {data.map((row: any, index: number) => (
                   <TableRow key={index}>
                     {Object.values(row).map((value: any, cellIndex: number) => (
                       <TableCell key={cellIndex} className="font-mono text-sm">

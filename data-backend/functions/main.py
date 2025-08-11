@@ -184,3 +184,77 @@ outlier_idx = find_outliers(df["Income"], method="isolation", contamination=0.1)
 
 # View outlier rows
 df.loc[outlier_idx]
+
+
+
+
+
+def correlation_matrix(df, method="pearson"):
+    """
+    Convert correlation matrix to triplets with column labels.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        method (str): Correlation method ("pearson", "spearman", "kendall").
+
+    Returns:
+        dict: { "columns": [...], "data": [[row, col, value], ...] }
+    """
+    if method not in ["pearson", "spearman", "kendall"]:
+        raise ValueError("method must be 'pearson', 'spearman', or 'kendall'")
+    
+    corr_matrix = df.corr(method=method, numeric_only=True)
+    columns = corr_matrix.columns.tolist()
+    triplets = [
+        [i, j, float(round(corr_matrix.iloc[i, j], 2))]
+        for i in range(len(columns))
+        for j in range(len(columns))
+    ]
+    
+    return {
+        "columns": columns,
+        "data": triplets
+    }
+
+# Example usage:
+# df = pd.read_csv("data.csv")
+# print(top3_correlations(df, "G3", method="spearman"))
+
+
+from statsmodels.tsa.stattools import adfuller, kpss
+from arch.unitroot import PhillipsPerron
+
+
+def stationarity_test(series: pd.Series, test_type: str = 'adf', alpha: float = 0.05):
+    """
+    Perform stationarity test on a time series.
+    
+    Parameters:
+    series (pd.Series): Time series data (e.g., df['column'])
+    test_type (str): 'adf', 'pp', or 'kpss'
+    alpha (float): Significance level for hypothesis testing
+    
+    Returns:
+    dict: {'test': test_type, 'result': 'Stationary'/'Non-Stationary', 'p_value': p_value}
+    """
+    series = series.dropna()
+
+    if test_type.lower() == 'adf':
+        _, p_value, _, _, _, _ = adfuller(series, autolag='AIC')
+        conclusion = "Stationary" if p_value < alpha else "Non-Stationary"
+
+    elif test_type.lower() == 'pp':
+        result = PhillipsPerron(series)
+        p_value = result.pvalue
+        conclusion = "Stationary" if p_value < alpha else "Non-Stationary"
+
+    elif test_type.lower() == 'kpss':
+        _, p_value, _, _ = kpss(series, regression='c', nlags='auto')
+        conclusion = "Stationary" if p_value > alpha else "Non-Stationary"
+
+    else:
+        raise ValueError("Invalid test_type. Choose from 'adf', 'pp', or 'kpss'.")
+
+    return {"test": test_type.upper(), "result": conclusion, "p_value": p_value}
+
+result = stationarity_test(df['Close'], 'pp')

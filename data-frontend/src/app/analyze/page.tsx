@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
+
 import {
   Card,
   CardContent,
@@ -28,6 +29,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
+import { correlationColor } from "@/lib/correlationColor";
+import { useSearchParams } from "next/navigation";
+import { ComboboxDemo } from "@/components/ComboBox";
 
 interface AnalysisSectionProps {
   data: any;
@@ -48,6 +52,19 @@ const testTypes = [
   { id: "ttest", name: "T-Tests", description: "One-sample, Two-sample" },
   { id: "anova", name: "ANOVA", description: "One-way, Two-way" },
   { id: "chisquare", name: "Chi-square", description: "Independence test" },
+];
+const stationaryTestTypes = [
+  {
+    id: "kpss",
+    name: "KPSS Test",
+    description: "Kwiatkowski-Phillips-Schmidt-Shin",
+  },
+  {
+    id: "adf",
+    name: "ADF Test",
+    description: "Augmented Dickey-Fuller",
+  },
+  { id: "pp", name: "PP", description: "Phillips-Perron" },
 ];
 
 const mockColumns = [
@@ -89,7 +106,69 @@ const mockTestResults = {
       "Significant difference in salary between groups (t = 2.847, p = 0.012)",
   },
 };
+const corr_data = {
+  columns: [
+    "Hours_Studied",
+    "Attendance",
+    "Sleep_Hours",
+    "Previous_Scores",
+    "Tutoring_Sessions",
+    "Physical_Activity",
+    "Exam_Score",
+  ],
 
+  data: [
+    [0, 0, 1.0],
+    [0, 1, -0.01],
+    [0, 2, 0.01],
+    [0, 3, 0.02],
+    [0, 4, -0.01],
+    [0, 5, 0.0],
+    [0, 6, 0.45],
+    [1, 0, -0.01],
+    [1, 1, 1.0],
+    [1, 2, -0.02],
+    [1, 3, -0.02],
+    [1, 4, 0.01],
+    [1, 5, -0.02],
+    [1, 6, 0.58],
+    [2, 0, 0.01],
+    [2, 1, -0.02],
+    [2, 2, 1.0],
+    [2, 3, -0.02],
+    [2, 4, -0.01],
+    [2, 5, -0.0],
+    [2, 6, -0.02],
+    [3, 0, 0.02],
+    [3, 1, -0.02],
+    [3, 2, -0.02],
+    [3, 3, 1.0],
+    [3, 4, -0.01],
+    [3, 5, -0.01],
+    [3, 6, 0.18],
+    [4, 0, -0.01],
+    [4, 1, 0.01],
+    [4, 2, -0.01],
+    [4, 3, -0.01],
+    [4, 4, 1.0],
+    [4, 5, 0.02],
+    [4, 6, 0.16],
+    [5, 0, 0.0],
+    [5, 1, -0.02],
+    [5, 2, -0.0],
+    [5, 3, -0.01],
+    [5, 4, 0.02],
+    [5, 5, 1.0],
+    [5, 6, 0.03],
+    [6, 0, 0.45],
+    [6, 1, 0.58],
+    [6, 2, -0.02],
+    [6, 3, 0.18],
+    [6, 4, 0.16],
+    [6, 5, 0.03],
+    [6, 6, 1.0],
+  ],
+};
 
 export default function AnalysisSection({
   data,
@@ -99,6 +178,8 @@ export default function AnalysisSection({
   const [selectedVariable, setSelectedVariable] = useState("");
   const [groupVariable, setGroupVariable] = useState("");
   const [testResults, setTestResults] = useState<any>(null);
+  const searchParams = useSearchParams();
+  const tab = searchParams.get("tab");
 
   const handleRunTest = () => {
     if (!selectedTest || !selectedVariable) {
@@ -191,7 +272,7 @@ export default function AnalysisSection({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-5xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -208,22 +289,87 @@ export default function AnalysisSection({
         </div>
       </div>
 
-      <Tabs defaultValue="descriptive" className="w-full">
+      <Tabs defaultValue={tab || "stationarity"} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="descriptive">Stationarity Test</TabsTrigger>
+          <TabsTrigger value="stationarity">Stationarity Test</TabsTrigger>
           <TabsTrigger value="tests">Hypothesis Testing</TabsTrigger>
           <TabsTrigger value="correlation">Correlation Analysis</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="descriptive" className="space-y-6">
-       <DEscriptiveStsts/>
+        <TabsContent value="stationarity" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Test Configuration */}
+            <div className="lg:col-span-1 h-full">
+              <Card className="data-card h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="w-4 h-4" />
+                    Test Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ComboboxDemo />
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Test Type
+                    </label>
+                    <Select
+                      value={selectedTest}
+                      onValueChange={setSelectedTest}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select test" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stationaryTestTypes.map((test) => (
+                          <SelectItem key={test.id} value={test.id}>
+                            <div>
+                              <div className="font-medium">{test.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {test.description}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button className="w-full" onClick={handleRunTest}>
+                    <Calculator className="w-4 h-4 mr-2" />
+                    Run Test
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Test Results */}
+            <div className="lg:col-span-2 h-full">
+              {testResults ? (
+                renderTestResults()
+              ) : (
+                <Card className="data-card">
+                  <CardContent className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        No Test Results
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Configure and run a statistical test to see results
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="tests" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Test Configuration */}
             <div className="lg:col-span-1">
-              <Card className="data-card">
+              <Card className="data-card h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="w-4 h-4" />
@@ -388,12 +534,14 @@ export default function AnalysisSection({
             <CardContent>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <Select>
+                  <Select defaultValue="pearson" defaultOpen>
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pearson">Pearson</SelectItem>
+                      <SelectItem value="pearson">
+                        Pearson <Badge className="text-xs">default</Badge>
+                      </SelectItem>
                       <SelectItem value="spearman">Spearman</SelectItem>
                       <SelectItem value="kendall">Kendall</SelectItem>
                     </SelectContent>
@@ -410,44 +558,59 @@ export default function AnalysisSection({
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2 text-sm">
+                <div
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: `repeat(${
+                      corr_data.columns.length + 1
+                    }, minmax(0, 1fr))`,
+                    gap: "0.5rem",
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {/* First row: header */}
                   <div className="font-medium">Variable</div>
-                  <div className="font-medium">age</div>
-                  <div className="font-medium">salary</div>
-                  <div className="font-medium">experience</div>
+                  {corr_data.columns.map((col, idx) => (
+                    <div key={idx} className="font-medium cursor-default">
+                      <p className=" line-clamp-1" title={col}>
+                        {" "}
+                        {col}
+                      </p>
+                    </div>
+                  ))}
 
-                  <div className="font-medium">age</div>
-                  <div className="bg-primary/20 p-2 rounded text-center">
-                    1.00
-                  </div>
-                  <div className="bg-primary/10 p-2 rounded text-center">
-                    0.74
-                  </div>
-                  <div className="bg-primary/15 p-2 rounded text-center">
-                    0.82
-                  </div>
+                  {/* Data rows */}
+                  {corr_data.columns.map((rowName, rowIdx) => (
+                    <React.Fragment key={rowIdx}>
+                      {/* Row label */}
+                      <div className="font-medium">{rowName}</div>
 
-                  <div className="font-medium">salary</div>
-                  <div className="bg-primary/10 p-2 rounded text-center">
-                    0.74
-                  </div>
-                  <div className="bg-primary/20 p-2 rounded text-center">
-                    1.00
-                  </div>
-                  <div className="bg-primary/12 p-2 rounded text-center">
-                    0.68
-                  </div>
+                      {corr_data.columns.map((_, colIdx) => {
+                        const valueObj = corr_data.data.find(
+                          ([r, c]) => r === rowIdx && c === colIdx
+                        );
+                        const value = valueObj ? valueObj[2] : 0;
 
-                  <div className="font-medium">experience</div>
-                  <div className="bg-primary/15 p-2 rounded text-center">
-                    0.82
-                  </div>
-                  <div className="bg-primary/12 p-2 rounded text-center">
-                    0.68
-                  </div>
-                  <div className="bg-primary/20 p-2 rounded text-center">
-                    1.00
-                  </div>
+                        return (
+                          <div
+                            key={colIdx}
+                            className="p-2 rounded text-center relative group cursor-pointer"
+                            style={{
+                              backgroundColor: correlationColor(value),
+                            }}
+                          >
+                            <p className=" mix-blend-difference">
+                              {value.toFixed(2)}
+                            </p>
+                            <div className="absolute -bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded hidden group-hover:block transition-opacity whitespace-nowrap z-10">
+                              {corr_data.columns[rowIdx]} ,{" "}
+                              {corr_data.columns[colIdx]}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </CardContent>

@@ -313,7 +313,7 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
                         Drop
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="glass">
+                    <DialogContent className="glass backdrop-blur">
                       <DialogHeader>
                         <DialogTitle className="mb-6">
                           Are you absolutely sure?
