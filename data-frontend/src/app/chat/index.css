@@ -1,0 +1,22 @@
+/* For inline code blocks */
+code {
+  background-color: #1e1e1e; /* dark background */
+  color: #ffffff; /* white text */
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+/* For fenced code blocks */
+pre {
+  background-color: #1e1e1e; /* dark background */
+  color: #ffffff; /* white text */
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+pre code {
+  background: none; /* remove double background */
+  color: inherit;
+}

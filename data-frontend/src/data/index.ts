@@ -900,12 +900,79 @@ export const default_data = [
     Exam_Score: 64,
   },
 ];
-export  const columnTypes = [
-    { name: "Teacher_Quality", type: "categorical", nulls: 78, unique: 3 },
-    { name: "School_Type", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Peer_Influence", type: "categorical", nulls: 0, unique: 3 },
-    { name: "Physical_Activity", type: "number", nulls: 0, unique: 7 },
-    { name: "Learning_Disabilities", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Gender", type: "categorical", nulls: 0, unique: 2 },
-    { name: "Exam_Score", type: "number", nulls: 0, unique: 45 },
-  ];
+export const columnTypes = [
+  { name: "Teacher_Quality", type: "categorical", nulls: 78, unique: 3 },
+  { name: "School_Type", type: "categorical", nulls: 0, unique: 2 },
+  { name: "Peer_Influence", type: "categorical", nulls: 0, unique: 3 },
+  { name: "Physical_Activity", type: "number", nulls: 0, unique: 7 },
+  { name: "Learning_Disabilities", type: "categorical", nulls: 0, unique: 2 },
+  { name: "Gender", type: "categorical", nulls: 0, unique: 2 },
+  { name: "Exam_Score", type: "number", nulls: 0, unique: 45 },
+];
+
+export const msg: ChatMessages[] = [
+  {
+    id: "1",
+    user: true
+,
+    content: "Hey Bolt, can you tell me more about AI Agents?",
+  },
+  {
+    id: "2",
+    content:
+      "AI agents are software that perceive their environment and act  autonomously to achieve goals, making decisions, learning, and  interacting. For example, an AI agent might schedule meetings by resolving conflicts, contacting participants, and finding optimal times—all without constant supervision.",
+  },
+  {
+    id: "3",
+    user: true,
+    content: "All clear, thank you!",
+  },
+    {
+    id: "1",
+    user: true
+,
+    content: "Hey Bolt, can you tell me more about AI Agents?",
+  },
+  {
+    id: "2",
+    content:
+      "AI agents are software that perceive their environment and act  autonomously to achieve goals, making decisions, learning, and  interacting. For example, an AI agent might schedule meetings by resolving conflicts, contacting participants, and finding optimal times—all without constant supervision.",
+  },
+  {
+    id: "3",
+    user: true,
+    content: "All clear, thank you!",
+  },
+    {
+    id: "1",
+    user: true
+,
+    content: "Hey Bolt, can you tell me more about AI Agents?",
+  },
+  {
+    id: "2",
+    content:
+      "AI agents are software that perceive their environment and act  autonomously to achieve goals, making decisions, learning, and  interacting. For example, an AI agent might schedule meetings by resolving conflicts, contacting participants, and finding optimal times—all without constant supervision.AI agents are software that perceive their environment and act  autonomously to achieve goals, making decisions, learning, and  interacting. For example, an AI agent might schedule meetings by resolving conflicts, contacting participants, and finding optimal times—all without constant supervision.",
+  },
+  {
+    id: "3",
+    user: true,
+    content: "All clear, thank you!",
+  },
+    {
+    id: "1",
+    user: true
+,
+    content: "Hey Bolt, can you tell me more about AI Agents?",
+  },
+  {
+    id: "2",
+    content:
+      "AI agents are software that perceive their environment and act  autonomously to achieve goals, making decisions, learning, and  interacting. For example, an AI agent might schedule meetings by resolving conflicts, contacting participants, and finding optimal times—all without constant supervision.",
+  },
+  {
+    id: "3",
+    user: true,
+    content: "The end",
+  },
+];

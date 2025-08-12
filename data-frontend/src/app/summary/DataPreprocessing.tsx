@@ -193,7 +193,7 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
 
       {/* Data Quality Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="data-card">
+        <Card className="data-card py-4 gap-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -209,8 +209,7 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
             </p>
           </CardContent>
         </Card>
-
-        <Card className="data-card">
+        <Card className="data-card py-4 gap-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
@@ -225,7 +224,7 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
           </CardContent>
         </Card>
 
-        <Card className="data-card">
+        <Card className="data-card py-4 gap-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-blue-500" />
