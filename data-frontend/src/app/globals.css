@@ -94,7 +94,6 @@
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
 
-
   --accent: oklch(0.735 0.226 79);
   --accent-foreground: oklch(0.093 0.033 246);
 
@@ -175,30 +174,37 @@
   -webkit-backdrop-filter: url(#frosted);
 }
 
-.scrollbar{
-  --sb-track-color: #232E33;
-  --sb-thumb-color: #969696;
-  --sb-size: 3px;
+.scrollbar {
+  --sb-track-color: #232e33;
+  --sb-thumb-color: var(--foreground);
+  --sb-size: 8px;
 }
 
 .scrollbar::-webkit-scrollbar {
-  width: var(--sb-size)
+  width: var(--sb-size);
 }
 
 .scrollbar::-webkit-scrollbar-track {
   background: var(--sb-track-color);
-  border-radius: 1px;
+  border-radius: 6px;
 }
 
 .scrollbar::-webkit-scrollbar-thumb {
   background: var(--sb-thumb-color);
-  border-radius: 1px;
-  
+  border-radius: 6px;
 }
 
 @supports not selector(::-webkit-scrollbar) {
   .scrollbar {
-    scrollbar-color: var(--sb-thumb-color)
-                     var(--sb-track-color);
+    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
   }
+}
+
+main[data-slot="sidebar-inset"] {
+  scroll-behavior: smooth;
+}
+div [data-title]{
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
 }

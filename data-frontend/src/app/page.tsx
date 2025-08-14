@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,9 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileText, AlertCircle,LineChart } from "lucide-react";
+import { Upload, FileText, AlertCircle, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useSocketStore } from "@/store/Socket";
 interface UploadSectionProps {
   onDataUpload: (data: any, filename: string) => void;
 }
@@ -33,7 +34,13 @@ const validateFile = (file: File): boolean => {
 export default function Home() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPending, startTransition] = useTransition();
-
+  const { socket, isConnected, setSocket } = useSocketStore((state) => state);
+  // useEffect(() => {
+  //   if (!isConnected) {
+  //     setSocket();
+  //     toast("socket connected");
+  //   }
+  // }, []);
   const processFile = useCallback(async (file: File) => {
     if (!validateFile(file)) {
       toast("Invalid file type", {

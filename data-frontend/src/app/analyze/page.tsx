@@ -289,6 +289,8 @@ export default function AnalysisSection({
         </div>
       </div>
 
+      //NOTE: Merge Stationarity and Hypothesis Testing at once and add a togle switch  ither user can do Hypothesis test or Stationarity
+
       <Tabs defaultValue={tab || "stationarity"} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="stationarity">Stationarity Test</TabsTrigger>

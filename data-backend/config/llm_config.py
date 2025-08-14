@@ -6,21 +6,30 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 load_dotenv()
 
 def ChatOpenRouter(
-    model="nvidia/usdcode-llama-3.1-70b-instruct",
+    model="moonshotai/kimi-k2:free",
     temperature=0.7,
-    streaming=True,
+    streaming=False,
     tokens=1024,
     callbacks=None
 ):
-    return ChatNVIDIA(
-        model=model,
+    return ChatOpenAI(
+        model="openai/gpt-oss-120b",
+        base_url = "https://integrate.api.nvidia.com/v1",
         api_key=os.getenv("NIM_API"),
         temperature=temperature,
-        streaming=streaming,
-        top_p=1,
-        max_output_tokens=tokens,  # ✅ NVIDIA expects this, not max_tokens
+        streaming=True,
+        max_tokens=tokens, 
         callbacks=callbacks
     )
+    # return ChatNVIDIA(
+    #         model="microsoft/phi-4-mini-flash-reasoning",
+    #         api_key=os.getenv("NIM_API"),
+    #         temperature=0.6,
+    #         top_p=0.95,
+    #         max_tokens=8192,  # ✅ NVIDIA expects this, not max_tokens
+    #         callbacks=callbacks
+    # )
+
     # return ChatOpenAI(
     #     model=model,
     #     temperature=temperature,

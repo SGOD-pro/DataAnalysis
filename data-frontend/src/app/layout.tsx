@@ -6,7 +6,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSidebar } from "@/components/ui/app-sidebar";
 import DarkVeil from "@/components/ui/darkVail";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,20 +31,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-        >
+        <ThemeProvider attribute="class" defaultTheme="dark">
           <Toaster />
           <div className="flex h-svh">
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset className="overflow-auto px-4 md:px-6 lg:px-8">
-                <div className="flex max-lg:flex-col flex-1 gap-6 py-6 w-full max-w-7xl mx-auto justify-center">
+                <div className="flex max-lg:flex-col flex-1 gap-6 py-6 w-full max-w-7xl mx-auto justify-center h-full">
+
+
                   <div className="fixed top-0 left-0 h-dvh w-dvw -z-0 blur-2xl">
                     <DarkVeil />
                   </div>
-                  <main className="z-10 md:mt-[4dvh]">{children}</main>
+
+                  <main className="z-10 w-full relative">
+                    {children}
+                  </main>
                 </div>
               </SidebarInset>
             </SidebarProvider>

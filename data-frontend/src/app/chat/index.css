@@ -1,22 +1,38 @@
-/* For inline code blocks */
+:root {
+  --htb-background: #000000;
+  --htb-foreground: #c8c8c8;
+  --htb-comment: #5c6370;
+  --htb-string: #89ca78;
+  --htb-keyword: #d55fde;
+  --htb-function: #52adf2;
+  --htb-variable: #ef596f;
+  --htb-constant: #d8985f;
+  --htb-type: #e5c07b;
+  --htb-operator: #2bbac5;
+  --htb-regexp: #57b6c2;
+  --htb-error: #f44747;
+}
+
 code {
-  background-color: #1e1e1e; /* dark background */
-  color: #ffffff; /* white text */
+  background-color: var(--htb-background);
+  color: var(--htb-foreground);
   padding: 4px 6px;
   border-radius: 4px;
   font-family: monospace;
 }
 
-/* For fenced code blocks */
 pre {
-  background-color: #1e1e1e; /* dark background */
-  color: #ffffff; /* white text */
+  background-color: var(--htb-background)!important;
+  color: var(--htb-foreground);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
 }
-
-pre code {
-  background: none; /* remove double background */
-  color: inherit;
+pre>* {
+  background-color: var(--htb-background)!important;
 }
+pre code{
+  background-color: var(--htb-background)!important;
+
+}
+

@@ -9,5 +9,5 @@ class WordBufferingCallback(AsyncCallbackHandler):
         await self.sio.emit("server_message", token, to=self.sid)
 
     async def on_llm_end(self, response, **kwargs):
-        print("Streaming finished.")
         await self.sio.emit("response_end", "[END]", to=self.sid)
+        print("Streaming finished.")

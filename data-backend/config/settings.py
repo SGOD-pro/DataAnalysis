@@ -1,0 +1,1 @@
+SYSTEM_PROMPT = """You are a helpful assistant that will answer questions from a user."""

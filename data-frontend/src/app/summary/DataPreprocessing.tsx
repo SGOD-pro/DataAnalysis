@@ -40,80 +40,28 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { columnTypes, fillMethods, outlierMethods } from "@/data";
+import useRawDataStore from "@/store/RawData";
 interface DataPreprocessingProps {
   data: any;
   filename: string;
 }
 
-const mockColumns = [
-  { name: "age", type: "numeric", nulls: 12, nullPercentage: 1.2 },
-  { name: "salary", type: "numeric", nulls: 8, nullPercentage: 0.8 },
-  { name: "department", type: "categorical", nulls: 5, nullPercentage: 0.5 },
-  { name: "city", type: "categorical", nulls: 3, nullPercentage: 0.3 },
-  { name: "experience", type: "numeric", nulls: 15, nullPercentage: 1.5 },
-  { name: "name", type: "text", nulls: 0, nullPercentage: 0 },
-];
+const mockColumns = columnTypes;
 
-const fillMethods = {
-  numeric: [
-    { value: "mean", label: "Mean" },
-    { value: "median", label: "Median" },
-    { value: "mode", label: "Mode" },
-    { value: "forward_fill", label: "Forward Fill" },
-    { value: "backward_fill", label: "Backward Fill" },
-    { value: "interpolate", label: "Interpolate" },
-    { value: "custom", label: "Custom Value" },
-  ],
-  categorical: [
-    { value: "mode", label: "Mode (Most Frequent)" },
-    { value: "forward_fill", label: "Forward Fill" },
-    { value: "backward_fill", label: "Backward Fill" },
-    { value: "custom", label: "Custom Value" },
-  ],
-  text: [
-    { value: "forward_fill", label: "Forward Fill" },
-    { value: "backward_fill", label: "Backward Fill" },
-    { value: "custom", label: "Custom Value" },
-    { value: "remove", label: "Remove Rows" },
-  ],
-};
-
-const outlierMethods = [
-  {
-    value: "iqr",
-    label: "IQR Method",
-    description: "Remove values beyond 1.5 * IQR",
-  },
-  {
-    value: "zscore",
-    label: "Z-Score Method",
-    description: "Remove values beyond 3 standard deviations",
-  },
-  {
-    value: "percentile",
-    label: "Percentile Method",
-    description: "Remove values beyond specified percentiles",
-  },
-  {
-    value: "isolation",
-    label: "Isolation Forest",
-    description: "Machine learning based outlier detection",
-  },
-];
-
-function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
+function DataPreprocessing() {
   const [selectedColumn, setSelectedColumn] = useState("");
   const [fillMethod, setFillMethod] = useState("");
   const [customValue, setCustomValue] = useState("");
   const [outlierMethod, setOutlierMethod] = useState("");
   const [preprocessingHistory, setPreprocessingHistory] = useState<any[]>([]);
+  const filename = useRawDataStore((state) => state.filename);
 
   const handleFillNulls = () => {
     if (!selectedColumn || !fillMethod) {
@@ -281,12 +229,12 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
                           <TableCell>
                             <Badge
                               variant={
-                                col.nullPercentage > 5
+                                (col.nulls / mockColumns.length) * 100 > 100
                                   ? "destructive"
                                   : "secondary"
                               }
                             >
-                              {col.nullPercentage}%
+                              {(col.nulls / mockColumns.length) * 100}%
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -503,7 +451,7 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
                   df.drop_duplicates()
                   Subset duplicates
                   df.drop_duplicates(subset=["col1", "col2"]) */}
-                  
+
         <TabsContent value="duplicates" className="space-y-6">
           <Card className="data-card">
             <CardHeader className="relative">
@@ -584,13 +532,16 @@ function DataPreprocessing({ data, filename }: DataPreprocessingProps) {
             </CardContent>
           </Card>
         </TabsContent>
+
       </Tabs>
+
       <div className="float-end">
         <Button size="sm" onClick={handleExportPreprocessed}>
           <Download className="w-4 h-4 mr-2" />
           Export Preprocessed
         </Button>
       </div>
+
     </div>
   );
 }

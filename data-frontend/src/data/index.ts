@@ -900,7 +900,7 @@ export const default_data = [
     Exam_Score: 64,
   },
 ];
-export const columnTypes = [
+export const columnTypes:ColumnDetails[] = [
   { name: "Teacher_Quality", type: "categorical", nulls: 78, unique: 3 },
   { name: "School_Type", type: "categorical", nulls: 0, unique: 2 },
   { name: "Peer_Influence", type: "categorical", nulls: 0, unique: 3 },
@@ -974,5 +974,53 @@ export const msg: ChatMessages[] = [
     id: "3",
     user: true,
     content: "The end",
+  },
+];
+
+export const fillMethods = {
+  number: [
+    { value: "mean", label: "Mean" },
+    { value: "median", label: "Median" },
+    { value: "mode", label: "Mode" },
+    { value: "forward_fill", label: "Forward Fill" },
+    { value: "backward_fill", label: "Backward Fill" },
+    { value: "interpolate", label: "Interpolate" },
+    { value: "custom", label: "Custom Value" },
+  ],
+  categorical: [
+    { value: "mode", label: "Mode (Most Frequent)" },
+    { value: "forward_fill", label: "Forward Fill" },
+    { value: "backward_fill", label: "Backward Fill" },
+    { value: "custom", label: "Custom Value" },
+  ],
+  text: [
+    { value: "forward_fill", label: "Forward Fill" },
+    { value: "backward_fill", label: "Backward Fill" },
+    { value: "custom", label: "Custom Value" },
+    { value: "remove", label: "Remove Rows" },
+  ],
+};
+
+
+export const outlierMethods = [
+  {
+    value: "iqr",
+    label: "IQR Method",
+    description: "Remove values beyond 1.5 * IQR",
+  },
+  {
+    value: "zscore",
+    label: "Z-Score Method",
+    description: "Remove values beyond 3 standard deviations",
+  },
+  {
+    value: "percentile",
+    label: "Percentile Method",
+    description: "Remove values beyond specified percentiles",
+  },
+  {
+    value: "isolation",
+    label: "Isolation Forest",
+    description: "Machine learning based outlier detection",
   },
 ];
