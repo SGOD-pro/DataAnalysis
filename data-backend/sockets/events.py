@@ -5,6 +5,8 @@ from config.llm_config import ChatOpenRouter
 from config.settings import SYSTEM_PROMPT
 connected_clients = set()
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+
+
 @sio.event
 async def connect(sid, environ):
     connected_clients.add(sid)
@@ -16,12 +18,27 @@ async def message(sid, data):
     print(f"Message from {sid}: {data}")
 
     callback = WordBufferingCallback(sio, sid)
-    streaming_llm = ChatOpenRouter(callbacks=[callback],streaming=True)
+    streaming_llm = ChatOpenRouter(callbacks=[callback], streaming=True)
 
-    await streaming_llm.ainvoke([
-        SystemMessage(content=SYSTEM_PROMPT),
-        HumanMessage(content=data)
-    ])
+    try:
+        await streaming_llm.ainvoke([
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=data)
+        ])
+    except AppException as ae:
+        # Send known custom errors to client
+        await sio.emit("error", {
+            "success": False,
+            "error": ae.message,
+            "details": ae.extra
+        }, to=sid)
+    except Exception as e:
+        # Catch unexpected errors
+        await sio.emit("error", {
+            "success": False,
+            "error": "Internal Server Error"
+        }, to=sid)
+        print(f"[ERROR] LLM streaming failed: {e}")
 
 
 

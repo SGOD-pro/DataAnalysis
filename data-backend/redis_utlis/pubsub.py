@@ -1,0 +1,32 @@
+from config.redis import redis_connection
+from utils.errors import AppException
+
+import threading
+
+
+def listen_for_updates(callback):
+    """Listen for DF updates and run callback when received."""
+    try:
+        r= redis_connection()
+        pubsub = r.pubsub()
+        pubsub.subscribe("df_update")
+        for message in pubsub.listen():
+            if message["type"] == "message":
+                callback()
+    except Exception as e:
+        raise AppException("Failed to connect to Redis", extra=str(e), status_code=500)
+
+def start_listener(callback):
+    """Start the Pub/Sub listener in a background thread."""
+    t = threading.Thread(target=listen_for_updates, args=(callback,), daemon=True)
+    t.start()
+
+
+def notify_update():
+    """Notify all workers that DF has been updated."""
+    r= redis_connection()
+    try:
+        r.publish("df_update", "refresh")
+    except Exception as e:
+        raise AppException("Failed to connect to Redis", extra=str(e), status_code=500)
+    

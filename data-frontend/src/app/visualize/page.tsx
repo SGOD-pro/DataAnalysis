@@ -353,6 +353,8 @@ export default function VisualizationSection({
             <Download className="w-4 h-4 mr-2" />
             Export Chart
           </Button>
+
+          //TODO: add a save chat option to save the chart to the database
         </div>
       </header>
 
