@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { columnTypes, fillMethods, outlierMethods } from "@/data";
 import useRawDataStore from "@/store/RawData";
+import useDataOverviewStore from "@/store/DataOverview";
 interface DataPreprocessingProps {
   data: any;
   filename: string;
@@ -61,6 +62,7 @@ function DataPreprocessing() {
   const [customValue, setCustomValue] = useState("");
   const [outlierMethod, setOutlierMethod] = useState("");
   const [preprocessingHistory, setPreprocessingHistory] = useState<any[]>([]);
+
   const filename = useRawDataStore((state) => state.filename);
 
   const handleFillNulls = () => {
@@ -128,6 +130,11 @@ function DataPreprocessing() {
     (col) => col.name === selectedColumn
   );
 
+  const columnsInfo = useDataOverviewStore((state) => state.columnsInfo);
+  const dataSummary = useDataOverviewStore((state) => state.dataSummary);
+  const totalMissingValues =
+    columnsInfo?.reduce((sum, col) => sum + col.nulls, 0) || 0;
+  const rows = dataSummary?.rows || 0;
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -150,7 +157,7 @@ function DataPreprocessing() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-500">
-              {mockColumns.reduce((sum, col) => sum + col.nulls, 0)}
+              {columnsInfo?.reduce((sum, col) => sum + col.nulls, 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Total null values
@@ -165,7 +172,9 @@ function DataPreprocessing() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">97.2%</div>
+            <div className="text-2xl font-bold text-green-500">
+              {((1 - totalMissingValues / rows) * 100).toFixed(2)}%
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Data completeness
             </p>
@@ -218,8 +227,8 @@ function DataPreprocessing() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockColumns
-                      .filter((col) => col.nulls > 0)
+                    {columnsInfo
+                      ?.filter((col) => col.nulls > 0)
                       .map((col) => (
                         <TableRow key={col.name}>
                           <TableCell className="font-medium">
@@ -229,12 +238,12 @@ function DataPreprocessing() {
                           <TableCell>
                             <Badge
                               variant={
-                                (col.nulls / mockColumns.length) * 100 > 100
+                                col.nulls / rows > 100
                                   ? "destructive"
                                   : "secondary"
                               }
                             >
-                              {(col.nulls / mockColumns.length) * 100}%
+                              {((col.nulls / rows) * 100).toFixed(2)}%
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -243,6 +252,10 @@ function DataPreprocessing() {
                 </Table>
               </CardContent>
             </Card>
+
+            {/* BUG: Drop by row: input number < no of colulmns
+            Drop by column: input column name
+            */}
 
             {/* Fill Missing Values */}
             <Card className="data-card">
@@ -298,8 +311,8 @@ function DataPreprocessing() {
                       <SelectValue placeholder="Choose column" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockColumns
-                        .filter((col) => col.nulls > 0)
+                      {columnsInfo
+                        ?.filter((col) => col.nulls > 0)
                         .map((col) => (
                           <SelectItem key={col.name} value={col.name}>
                             <div className="flex items-center gap-2">
@@ -375,8 +388,8 @@ function DataPreprocessing() {
                       <SelectValue placeholder="Choose column" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockColumns
-                        .filter((col) => col.type === "numeric")
+                      {columnsInfo
+                        ?.filter((col) => col.type === "number")
                         .map((col) => (
                           <SelectItem key={col.name} value={col.name}>
                             {col.name}
@@ -532,7 +545,6 @@ function DataPreprocessing() {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
 
       <div className="float-end">
@@ -541,7 +553,6 @@ function DataPreprocessing() {
           Export Preprocessed
         </Button>
       </div>
-
     </div>
   );
 }

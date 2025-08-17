@@ -1,5 +1,5 @@
 "use client"
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -255,6 +255,7 @@ const data = [
 function QuickOverView() {
   const filename = "Demo Data";
   const router = useRouter();
+
   return (
     <div className="mx-auto w-4xl">
       <header className="mb-6 flex items-center justify-between">

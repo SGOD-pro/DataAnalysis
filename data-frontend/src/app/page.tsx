@@ -12,6 +12,8 @@ import { Upload, FileText, AlertCircle, LineChart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useSocketStore } from "@/store/Socket";
+import ApiService from "@/lib/ApiService";
+const apiService=new ApiService()
 interface UploadSectionProps {
   onDataUpload: (data: any, filename: string) => void;
 }
@@ -34,13 +36,9 @@ const validateFile = (file: File): boolean => {
 export default function Home() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const { socket, isConnected, setSocket } = useSocketStore((state) => state);
-  // useEffect(() => {
-  //   if (!isConnected) {
-  //     setSocket();
-  //     toast("socket connected");
-  //   }
-  // }, []);
+  useEffect(() => {
+    apiService.get("/upload");
+  }, []);
   const processFile = useCallback(async (file: File) => {
     if (!validateFile(file)) {
       toast("Invalid file type", {

@@ -1,6 +1,6 @@
 from pymongo import AsyncMongoClient
 import os
-from utils.errors import AppException, app_exception_handler
+from main.utils.errors import AppException, app_exception_handler
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "mydb")

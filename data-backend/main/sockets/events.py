@@ -1,10 +1,12 @@
 import socketio
 from langchain.schema import HumanMessage, SystemMessage
-from callbacks.word_buffer import WordBufferingCallback
-from config.llm_config import ChatOpenRouter
-from config.settings import SYSTEM_PROMPT
+
+from main.callbacks.word_buffer import WordBufferingCallback
+from main.config.llm_config import ChatOpenRouter
+from main.config.settings import SYSTEM_PROMPT
+
 connected_clients = set()
-sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+sio = socketio.AsyncServer(async_mode="asgi",cors_allowed_origins="http://localhost:3000" )
 
 
 @sio.event

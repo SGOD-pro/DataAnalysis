@@ -9,6 +9,8 @@ import { toast } from "sonner";
 
 interface ApiError {
   message: string;
+  success: boolean;
+  data?: any;
 }
 
 interface ApiResponse<T> {
@@ -34,7 +36,7 @@ class ApiService {
   private cancelTokenSource?: CancelTokenSource;
   private axiosInstance: AxiosInstance;
 
-  constructor(baseUrl: string = "/api/") {
+  constructor(baseUrl: string = "http://localhost:8000") {
     this.axiosInstance = axios.create({ baseURL: baseUrl });
   }
 
@@ -81,7 +83,7 @@ class ApiService {
 
       setHydrated?.();
       setStore?.(response.data.data);
-
+        
       const result: ApiServicesResponse<T> = {
         success: true,
         data: response.data.data,
@@ -95,7 +97,7 @@ class ApiService {
         console.warn("Previous request canceled:", (error as Error).message);
         return { success: false, error: new Error("Request canceled") };
       }
-
+      console.log(error)
       const axiosError = error as AxiosError<ApiError>;
       const result: ApiServicesResponse<T> = {
         success: false,

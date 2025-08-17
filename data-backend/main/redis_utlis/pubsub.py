@@ -1,7 +1,12 @@
-from config.redis import redis_connection
-from utils.errors import AppException
-
+from main.config.redis import redis_connection
+from main.utils.errors import AppException
 import threading
+
+import redis
+from main.utils.errors import AppException
+
+r = redis.Redis(host="localhost", port=6379,decode_responses=False,)
+
 
 
 def listen_for_updates(callback):
@@ -24,7 +29,7 @@ def start_listener(callback):
 
 def notify_update():
     """Notify all workers that DF has been updated."""
-    r= redis_connection()
+    #r= redis_connection()
     try:
         r.publish("df_update", "refresh")
     except Exception as e:

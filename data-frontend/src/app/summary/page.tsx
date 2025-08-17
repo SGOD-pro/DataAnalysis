@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -35,14 +35,15 @@ import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
 import { useRouter, useSearchParams } from "next/navigation";
 import UniqueValues from "./UniqueValues";
 import { columnTypes } from "@/data";
-
+import ApiService from "@/lib/ApiService";
+import useDataOverviewStore from "@/store/DataOverview";
+const apiService = new ApiService();
 interface DataSummaryProps {
   data: any;
   filename: string;
 }
 
-const data = {'rows': 6607, 'columns': 20, 'missing_percentage': 18.0}
-
+const data = { rows: 6607, columns: 20, missing_percentage: 18.0 };
 
 export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
   const searchParams = useSearchParams();
@@ -104,7 +105,44 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
         return "bg-muted";
     }
   };
+  const dataSummary = useDataOverviewStore((state) => state.dataSummary);
+  const setDataSummary = useDataOverviewStore((state) => state.setDataSummary);
 
+  const columnsInfo = useDataOverviewStore((state) => state.columnsInfo);
+  const setColumnsInfo = useDataOverviewStore((state) => state.setColumnsInfo);
+
+  const descriptiveStats = useDataOverviewStore(
+    (state) => state.descriptiveStats
+  );
+  const setDescriptiveStats = useDataOverviewStore(
+    (state) => state.setDescriptiveStats
+  );
+
+  const uniqueValues = useDataOverviewStore((state) => state.uniqueValues);
+  const setUniqueValues = useDataOverviewStore(
+    (state) => state.setUniqueValues
+  );
+  useEffect(() => {
+    console.log(dataSummary, columnsInfo, descriptiveStats, uniqueValues);
+    if (!dataSummary)
+      apiService.get<DataSummary>("/summary").then((res) => {
+        if (res?.data) setDataSummary(res.data);
+      });
+    if (!columnsInfo)
+      apiService.get<ColumnDetails[]>("/column-info").then((res) => {
+        if (res?.data) setColumnsInfo(res.data);
+      });
+    if (!descriptiveStats)
+      apiService
+        .get<{data:DescriptiveStatistics[]}>("/stats")
+        .then((res) => {
+          if (res?.data) setDescriptiveStats(res.data.data);
+        });
+    if (!uniqueValues)
+      apiService.get<UniqueValues[]>("/unique-values").then((res) => {
+        if (res?.data) setUniqueValues(res.data);
+      });
+  }, [dataSummary, columnsInfo, descriptiveStats, uniqueValues]);
   return (
     <div className="mx-auto w-4xl flex justify-center">
       <div className="space-y-6 w-full">
@@ -148,7 +186,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
-                    {data.rows.toLocaleString()}
+                    {dataSummary?.rows.toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Data points
@@ -165,7 +203,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-accent">
-                    {data.columns}
+                    {dataSummary?.columns}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Features</p>
                 </CardContent>
@@ -180,7 +218,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-secondary-foreground">
-                    {data.missing_percentage}%
+                    {dataSummary?.missing_percentage}%
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Overall completeness
@@ -209,47 +247,48 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {columnTypes.map((column) => {
-                      const completeness = (
-                        ((data.rows - column.nulls) / data.rows) *
-                        100
-                      ).toFixed(1);
-                      return (
-                        <TableRow key={column.name}>
-                          <TableCell className="font-medium">
-                            {column.name}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className={getTypeColor(column.type)}
-                            >
-                              {getTypeIcon(column.type)}
-                              <span className="ml-1 capitalize">
-                                {column.type}
-                              </span>
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{column.nulls}</TableCell>
-                          <TableCell>
-                            {column.unique.toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 bg-muted rounded-full h-2">
-                                <div
-                                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${completeness}%` }}
-                                />
+                    {Array.isArray(columnsInfo) &&
+                      columnsInfo.map((column) => {
+                        const completeness = (
+                          ((data.rows - column.nulls) / data.rows) *
+                          100
+                        ).toFixed(1);
+                        return (
+                          <TableRow key={column.name}>
+                            <TableCell className="font-medium">
+                              {column.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="secondary"
+                                className={getTypeColor(column.type)}
+                              >
+                                {getTypeIcon(column.type)}
+                                <span className="ml-1 capitalize">
+                                  {column.type}
+                                </span>
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{column.nulls}</TableCell>
+                            <TableCell>
+                              {column.unique.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-muted rounded-full h-2">
+                                  <div
+                                    className="bg-primary h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${completeness}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-medium">
+                                  {completeness}%
+                                </span>
                               </div>
-                              <span className="text-sm font-medium">
-                                {completeness}%
-                              </span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -262,7 +301,7 @@ export default function DataSummary({ filename = "Demo" }: DataSummaryProps) {
           </TabsContent>
 
           <TabsContent value="preprocessing">
-            <DataPreprocessing data={data} filename={filename} />
+            <DataPreprocessing />
           </TabsContent>
         </Tabs>
       </div>
