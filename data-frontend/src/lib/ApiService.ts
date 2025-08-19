@@ -4,6 +4,7 @@ import axios, {
   AxiosError,
   CancelTokenSource,
   AxiosRequestHeaders,
+  AxiosRequestConfig,
 } from "axios";
 import { toast } from "sonner";
 
@@ -49,10 +50,9 @@ class ApiService {
   }
 
   private getHeaders(isMultipart: boolean): AxiosRequestHeaders {
-    const headers = {
+    return {
       "Content-Type": isMultipart ? "multipart/form-data" : "application/json",
     } as AxiosRequestHeaders;
-    return headers;
   }
 
   async get<T>(
@@ -62,7 +62,8 @@ class ApiService {
       setStore?: (item: T) => void;
       hydrated?: boolean;
       setHydrated?: () => void;
-    } = {}
+    } = {},
+    config: AxiosRequestConfig = {}
   ): Promise<ApiServicesResponse<T>> {
     const { setStore, hydrated, setHydrated } = options;
     const action = "GET";
@@ -71,7 +72,7 @@ class ApiService {
       return { success: true, message: "Store already hydrated" };
     }
 
-    // Cancel previous request if exists
+    // cancel previous
     this.cancelTokenSource?.cancel("Request canceled due to a new request.");
     this.cancelTokenSource = axios.CancelToken.source();
 
@@ -79,11 +80,12 @@ class ApiService {
       const response: AxiosResponse<ApiResponse<T>> =
         await this.axiosInstance.get(endpoint, {
           cancelToken: this.cancelTokenSource.token,
+          ...config,
         });
 
       setHydrated?.();
       setStore?.(response.data.data);
-        
+
       const result: ApiServicesResponse<T> = {
         success: true,
         data: response.data.data,
@@ -97,7 +99,7 @@ class ApiService {
         console.warn("Previous request canceled:", (error as Error).message);
         return { success: false, error: new Error("Request canceled") };
       }
-      console.log(error)
+
       const axiosError = error as AxiosError<ApiError>;
       const result: ApiServicesResponse<T> = {
         success: false,
@@ -117,16 +119,20 @@ class ApiService {
 
   async post<T>(
     endpoint: string,
-    data: T,
+    data=null,
     isMultipart = false,
     showToast = true,
-    { addStore }: StoreHandlers<T> = {}
+
+    { addStore }: StoreHandlers<T> = {},
+    config: AxiosRequestConfig = {}
   ): Promise<ApiServicesResponse<T>> {
     const action = "POST";
+    console.log('endpoint',this.axiosInstance.defaults.baseURL)
     try {
       const response: AxiosResponse<ApiResponse<T>> =
         await this.axiosInstance.post(endpoint, data, {
           headers: this.getHeaders(isMultipart),
+          ...config,
         });
 
       addStore?.(response.data.data);
@@ -157,16 +163,18 @@ class ApiService {
 
   async put<T>(
     endpoint: string,
-    data: T,
+    data: any,
     isMultipart = false,
     showToast = true,
-    { updateStore }: StoreHandlers<T> = {}
+    { updateStore }: StoreHandlers<T> = {},
+    config: AxiosRequestConfig = {}
   ): Promise<ApiServicesResponse<T>> {
     const action = "UPDATE";
     try {
       const response: AxiosResponse<ApiResponse<T>> =
         await this.axiosInstance.put(endpoint, data, {
           headers: this.getHeaders(isMultipart),
+          ...config,
         });
 
       updateStore?.(response.data.data);
@@ -198,12 +206,13 @@ class ApiService {
   async delete<T>(
     endpoint: string,
     showToast = true,
-    { deleteStore }: StoreHandlers<T> = {}
+    { deleteStore }: StoreHandlers<T> = {},
+    config: AxiosRequestConfig = {}
   ): Promise<ApiServicesResponse<T>> {
     const action = "DELETE";
     try {
       const response: AxiosResponse<ApiResponse<T>> =
-        await this.axiosInstance.delete(endpoint);
+        await this.axiosInstance.delete(endpoint, { ...config });
 
       const deletedId = (response.data.data as unknown as { _id?: string })
         ?._id;

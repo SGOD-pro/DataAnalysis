@@ -1,4 +1,4 @@
-from main.config.redis import redis_connection
+
 from main.utils.errors import AppException
 import threading
 
@@ -12,7 +12,7 @@ r = redis.Redis(host="localhost", port=6379,decode_responses=False,)
 def listen_for_updates(callback):
     """Listen for DF updates and run callback when received."""
     try:
-        r= redis_connection()
+        #r= redis_connection()
         pubsub = r.pubsub()
         pubsub.subscribe("df_update")
         for message in pubsub.listen():

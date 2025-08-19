@@ -13,10 +13,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useSocketStore } from "@/store/Socket";
 import ApiService from "@/lib/ApiService";
-const apiService=new ApiService()
-interface UploadSectionProps {
-  onDataUpload: (data: any, filename: string) => void;
-}
+import useDataOverviewStore from "@/store/DataOverview";
+import useRawDataStore from "@/store/RawData";
+const apiService = new ApiService();
 
 const validateFile = (file: File): boolean => {
   const validTypes = [
@@ -33,12 +32,20 @@ const validateFile = (file: File): boolean => {
 
   return hasValidType || hasValidExtension;
 };
+
+async function uploadFile() {
+  const res = await apiService.get<RawData>("/upload");
+  if (res?.data) {
+    useRawDataStore.getState().setData(res.data.data);
+    useRawDataStore.getState().setFilename(res.data.filename);
+  }
+}
 export default function Home() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPending, startTransition] = useTransition();
-  useEffect(() => {
-    apiService.get("/upload");
-  }, []);
+
+  useEffect(() => {}, []);
+
   const processFile = useCallback(async (file: File) => {
     if (!validateFile(file)) {
       toast("Invalid file type", {
@@ -46,37 +53,8 @@ export default function Home() {
       });
       return;
     }
-
     try {
-      // For now, we'll simulate file processing
-      // In a real app, you'd parse CSV/Excel here
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Mock data for demonstration
-      const mockData = {
-        rows: 1000,
-        columns: 15,
-        preview: [
-          { id: 1, name: "John Doe", age: 28, city: "New York", salary: 75000 },
-          {
-            id: 2,
-            name: "Jane Smith",
-            age: 34,
-            city: "San Francisco",
-            salary: 95000,
-          },
-          {
-            id: 3,
-            name: "Bob Johnson",
-            age: 42,
-            city: "Chicago",
-            salary: 68000,
-          },
-        ],
-      };
-
-      //onDataUpload(mockData, file.name);
-
       toast("File uploaded successfully!", {
         description: `${file.name} has been processed and is ready for analysis.`,
       });
@@ -111,7 +89,9 @@ export default function Home() {
       });
     }
   };
-
+  useEffect(() => {
+    uploadFile();
+  }, []);
   return (
     <>
       <div className="space-y-6 z-10">

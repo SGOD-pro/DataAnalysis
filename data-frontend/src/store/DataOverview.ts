@@ -11,6 +11,8 @@ type DataOverviewState = {
   setColumnsInfo: (columnsInfo: ColumnDetails[]) => void;
   setDescriptiveStats: (descriptiveStats: DescriptiveStatistics[]) => void;
   setUniqueValues: (uniqueValues: UniqueValues[]) => void;
+
+  
 };
 
 export const useDataOverviewStore = create<DataOverviewState>()(

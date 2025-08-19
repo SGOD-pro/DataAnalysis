@@ -22,8 +22,9 @@ def list_clients():
 def upload():
     df=pd.read_csv("main/data.csv")
     set_df(df)
+    df = df.where(pd.notnull(df), None)
     return {
-        "data": None,
+        "data": {'data': df.to_dict(orient="records"),'filename':'MyData'},
         "message": "DataFrame UPloaded",
     }
 
@@ -75,7 +76,7 @@ def get_raw_data(df: pd.DataFrame = Depends(get_df)):
 def update_df():
     df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
     set_df(df)
-    return {"status": "updated"}
+    return {}
 
 
 

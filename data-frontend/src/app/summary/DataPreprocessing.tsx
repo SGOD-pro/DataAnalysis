@@ -1,4 +1,11 @@
-import { memo, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import {
   Card,
   CardContent,
@@ -7,17 +14,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertTriangle, CheckCircle, RefreshCw, Download } from "lucide-react";
+import { toast } from "sonner";
+
+import useRawDataStore from "@/store/RawData";
+import useDataOverviewStore from "@/store/DataOverview";
+import MissingValues from "./MissingValues";
+import Outliers from "./Outliers";
+import ApiService from "@/lib/ApiService";
 import {
   Table,
   TableBody,
@@ -26,98 +32,155 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Wrench,
-  AlertTriangle,
-  CheckCircle,
-  TrendingUp,
-  BarChart3,
-  RefreshCw,
-  Download,
-  TriangleAlert,
-} from "lucide-react";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { columnTypes, fillMethods, outlierMethods } from "@/data";
-import useRawDataStore from "@/store/RawData";
-import useDataOverviewStore from "@/store/DataOverview";
-interface DataPreprocessingProps {
-  data: any;
-  filename: string;
-}
+import { useHistoryStore } from "@/store/History";
+const apiService = new ApiService();
+type MissingStatsProps = {
+  variant: "total" | "percentage";
+};
+type PreprocessingOperation = {
+  id: number;
+  type: string;
+  column: string;
+  method: string;
+  timestamp: string;
+};
 
-const mockColumns = columnTypes;
+type OperationsProps = {
+  variant: "count" | "list";
+};
+const MissingStats = memo(({ variant }: MissingStatsProps) => {
+  const columnsInfo = useDataOverviewStore((state) => state.columnsInfo);
+  const dataSummary = useDataOverviewStore((state) => state.dataSummary);
 
-function DataPreprocessing() {
-  const [selectedColumn, setSelectedColumn] = useState("");
-  const [fillMethod, setFillMethod] = useState("");
-  const [customValue, setCustomValue] = useState("");
-  const [outlierMethod, setOutlierMethod] = useState("");
-  const [preprocessingHistory, setPreprocessingHistory] = useState<any[]>([]);
+  const { totalMissingValues, missingValuePercentage } = useMemo(() => {
+    const totalMissingValues =
+      columnsInfo?.reduce((sum, col) => sum + col.nulls, 0) || 0;
 
-  const filename = useRawDataStore((state) => state.filename);
+    const rows = dataSummary?.rows || 0;
+    const missingValuePercentage =
+      rows > 0 ? ((1 - totalMissingValues / rows) * 100).toFixed(2) : "0.00";
 
-  const handleFillNulls = () => {
-    if (!selectedColumn || !fillMethod) {
-      toast("Missing Parameters", {
-        description: "Please select both column and fill method",
-      });
-      return;
-    }
-
-    const operation = {
-      id: Date.now(),
-      type: "fill_nulls",
-      column: selectedColumn,
-      method: fillMethod,
-      customValue: customValue,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    setPreprocessingHistory([...preprocessingHistory, operation]);
-    toast("Null Values Filled", {
-      description: `Applied ${fillMethod} method to ${selectedColumn} column`,
-    });
-  };
-
-  const handleRemoveOutliers = () => {
-    if (!selectedColumn || !outlierMethod) {
-      toast("Missing Parameters", {
-        description: "Please select both column and outlier detection method",
-      });
-      return;
-    }
-
-    const operation = {
-      id: Date.now(),
-      type: "remove_outliers",
-      column: selectedColumn,
-      method: outlierMethod,
-      timestamp: new Date().toLocaleTimeString(),
-    };
-
-    setPreprocessingHistory([...preprocessingHistory, operation]);
-    toast("Outliers Removed", {
-      description: `Applied ${outlierMethod} method to ${selectedColumn} column`,
-    });
-  };
-
-  const handleUndoOperation = (operationId: number) => {
-    setPreprocessingHistory(
-      preprocessingHistory.filter((op) => op.id !== operationId)
+    return { totalMissingValues, missingValuePercentage };
+  }, [columnsInfo, dataSummary]);
+  // console.log(missingValuePercentage);
+  if (variant === "total") {
+    return (
+      <div className="text-2xl font-bold text-amber-500">
+        {totalMissingValues}
+      </div>
     );
-    toast("Operation Undone", {
-      description: "Preprocessing step has been reverted",
+  }
+
+  return (
+    <div className="text-2xl font-bold text-green-500">
+      {missingValuePercentage}%
+    </div>
+  );
+});
+
+const Operations = memo(({ variant }: OperationsProps) => {
+  const history = useHistoryStore((state) => state.history);
+
+  // const handleUndoOperation = useCallback(
+  //   (operationId: number) => {
+  //     setPreprocessingHistory((prev) =>
+  //       prev.filter((op) => op.id !== operationId)
+  //     );
+  //     toast("Operation Undone", {
+  //       description: "Preprocessing step has been reverted",
+  //     });
+  //   },
+  //   [setPreprocessingHistory]
+  // );
+
+  if (variant === "count") {
+    return (
+      <div className="text-2xl font-bold text-blue-500">{history.length}</div>
+    );
+  }
+
+  return history.length === 0 ? (
+    <div className="text-center py-8">
+      <RefreshCw className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">No Operations Yet</h3>
+      <p className="text-muted-foreground">
+        Apply preprocessing operations to see them here
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-3">
+      {history.map((operation) => (
+        <div
+          key={operation.id}
+          className="flex items-center justify-between p-3 border rounded"
+        >
+          <div>
+            <div className="font-medium capitalize">
+              {operation.operation}: {operation.column}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => console.log("Undo")}
+          >
+            Undo
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+const Duplicates = () => {
+  const [isPending, startTransition] = useTransition();
+  const [data, setData] = useState<any[]>([]);
+  useEffect(() => {
+    startTransition(async () => {
+      const res = await apiService.get<any[]>("/preprocessing/duplicates");
+      if (res.data) {
+        setData(res.data);
+      }
     });
-  };
+  }, []);
+  if (data.length == 0)
+    return (
+      <div className="text-center py-8">
+        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No Duplicates Found</h3>
+        <p className="text-muted-foreground">
+          Your dataset appears to be clean of duplicate records
+        </p>
+      </div>
+    );
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {Object.keys(data[0] || {}).map((key) => (
+            <TableHead key={key} className="capitalize">
+              {key}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {data.map((row: any, index: number) => (
+          <TableRow key={index}>
+            {Object.values(row).map((value: any, cellIndex: number) => (
+              <TableCell key={cellIndex} className="font-mono text-sm">
+                {value?.toString() || "—"}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+function DataPreprocessing() {
+  const filename = useRawDataStore((state) => state.filename);
 
   const handleExportPreprocessed = () => {
     toast("Export Preprocessed Data", {
@@ -126,18 +189,8 @@ function DataPreprocessing() {
     });
   };
 
-  const selectedColumnInfo = mockColumns.find(
-    (col) => col.name === selectedColumn
-  );
-
-  const columnsInfo = useDataOverviewStore((state) => state.columnsInfo);
-  const dataSummary = useDataOverviewStore((state) => state.dataSummary);
-  const totalMissingValues =
-    columnsInfo?.reduce((sum, col) => sum + col.nulls, 0) || 0;
-  const rows = dataSummary?.rows || 0;
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-muted-foreground mt-1">
@@ -145,7 +198,6 @@ function DataPreprocessing() {
           </p>
         </div>
       </div>
-
       {/* Data Quality Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="data-card py-4 gap-0">
@@ -156,9 +208,7 @@ function DataPreprocessing() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-500">
-              {columnsInfo?.reduce((sum, col) => sum + col.nulls, 0)}
-            </div>
+            <MissingStats variant="total" />
             <p className="text-xs text-muted-foreground mt-1">
               Total null values
             </p>
@@ -172,9 +222,7 @@ function DataPreprocessing() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              {((1 - totalMissingValues / rows) * 100).toFixed(2)}%
-            </div>
+            <MissingStats variant="percentage" />
             <p className="text-xs text-muted-foreground mt-1">
               Data completeness
             </p>
@@ -189,9 +237,7 @@ function DataPreprocessing() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-500">
-              {preprocessingHistory.length}
-            </div>
+            <Operations variant="count" />
             <p className="text-xs text-muted-foreground mt-1">
               Applied operations
             </p>
@@ -209,254 +255,12 @@ function DataPreprocessing() {
 
         <TabsContent value="missing" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Missing Values Analysis */}
-            <Card className="data-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  Missing Values by Column
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Column</TableHead>
-                      <TableHead>Missing</TableHead>
-                      <TableHead>Percentage</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {columnsInfo
-                      ?.filter((col) => col.nulls > 0)
-                      .map((col) => (
-                        <TableRow key={col.name}>
-                          <TableCell className="font-medium">
-                            {col.name}
-                          </TableCell>
-                          <TableCell>{col.nulls}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                col.nulls / rows > 100
-                                  ? "destructive"
-                                  : "secondary"
-                              }
-                            >
-                              {((col.nulls / rows) * 100).toFixed(2)}%
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* BUG: Drop by row: input number < no of colulmns
-            Drop by column: input column name
-            */}
-
-            {/* Fill Missing Values */}
-            <Card className="data-card">
-              <CardHeader>
-                <div className="flex justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Wrench className="w-4 h-4" />
-                    Fill Missing Values
-                  </CardTitle>
-
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant={"destructive"} size={"sm"}>
-                        <AlertTriangle className="w-4 h-4" />
-                        Drop
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="glass backdrop-blur">
-                      <DialogHeader>
-                        <DialogTitle className="mb-6">
-                          Are you absolutely sure?
-                        </DialogTitle>
-                        <Label>Custom Value</Label>
-                        <Input
-                          placeholder="Enter custom value"
-                          value={customValue}
-                          type="number"
-                          onChange={(e) => setCustomValue(e.target.value)}
-                          max={10}
-                        />
-                      </DialogHeader>
-
-                      <DialogFooter className="sm:justify-start">
-                        <Button type="button">Apply</Button>
-                        <DialogClose asChild>
-                          <Button type="button" variant="secondary">
-                            Close
-                          </Button>
-                        </DialogClose>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Select Column</Label>
-                  <Select
-                    value={selectedColumn}
-                    onValueChange={setSelectedColumn}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose column" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {columnsInfo
-                        ?.filter((col) => col.nulls > 0)
-                        .map((col) => (
-                          <SelectItem key={col.name} value={col.name}>
-                            <div className="flex items-center gap-2">
-                              {col.name}
-                              <Badge variant="secondary" className="text-xs">
-                                {col.type}
-                              </Badge>
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedColumnInfo && (
-                  <div>
-                    <Label>Fill Method</Label>
-                    <Select value={fillMethod} onValueChange={setFillMethod}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fillMethods[
-                          selectedColumnInfo.type as keyof typeof fillMethods
-                        ]?.map((method) => (
-                          <SelectItem key={method.value} value={method.value}>
-                            {method.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {fillMethod === "custom" && (
-                  <div>
-                    <Label>Custom Value</Label>
-                    <Input
-                      placeholder="Enter custom value"
-                      value={customValue}
-                      onChange={(e) => setCustomValue(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                <Button onClick={handleFillNulls} className="w-full">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Apply Fill Method
-                </Button>
-              </CardContent>
-            </Card>
+            <MissingValues />
           </div>
         </TabsContent>
 
         <TabsContent value="outliers" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Outlier Detection */}
-            <Card className="data-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Outlier Detection
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Select Numeric Column</Label>
-                  <Select
-                    value={selectedColumn}
-                    onValueChange={setSelectedColumn}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose column" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {columnsInfo
-                        ?.filter((col) => col.type === "number")
-                        .map((col) => (
-                          <SelectItem key={col.name} value={col.name}>
-                            {col.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Detection Method</Label>
-                  <Select
-                    value={outlierMethod}
-                    onValueChange={setOutlierMethod}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {outlierMethods.map((method) => (
-                        <SelectItem key={method.value} value={method.value}>
-                          <div>
-                            <div className="font-medium">{method.label}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {method.description}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button onClick={handleRemoveOutliers} className="w-full">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Remove Outliers
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Outlier Summary */}
-            <Card className="data-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Outlier Summary(IQR)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockColumns
-                    .filter((col) => col.type === "numeric")
-                    .map((col) => (
-                      <div
-                        key={col.name}
-                        className="flex justify-between items-center p-3 border rounded"
-                      >
-                        <span className="font-medium">{col.name}</span>
-                        <Badge variant="outline">
-                          {Math.floor(Math.random() * 10)} outliers
-                        </Badge>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Outliers />
         </TabsContent>
 
         {/* /NOTE: Duplicates Filtering
@@ -483,15 +287,7 @@ function DataPreprocessing() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No Duplicates Found
-                </h3>
-                <p className="text-muted-foreground">
-                  Your dataset appears to be clean of duplicate records
-                </p>
-              </div>
+              <Duplicates />
             </CardContent>
           </Card>
         </TabsContent>
@@ -506,42 +302,7 @@ function DataPreprocessing() {
               <CardDescription>Track of all applied operations</CardDescription>
             </CardHeader>
             <CardContent>
-              {preprocessingHistory.length === 0 ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
-                    No Operations Yet
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Apply preprocessing operations to see them here
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {preprocessingHistory.map((operation) => (
-                    <div
-                      key={operation.id}
-                      className="flex items-center justify-between p-3 border rounded"
-                    >
-                      <div>
-                        <div className="font-medium capitalize">
-                          {operation.type.replace("_", " ")}: {operation.column}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Method: {operation.method} • {operation.timestamp}
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUndoOperation(operation.id)}
-                      >
-                        Undo
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Operations variant="list" />
             </CardContent>
           </Card>
         </TabsContent>

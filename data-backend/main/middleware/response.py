@@ -16,6 +16,8 @@ class ResponseMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         try:
             response = await call_next(request)
+            if request.url.path.startswith("/static"):
+                return await call_next(request)
             if isinstance(response, JSONResponse):
                 return response  
 

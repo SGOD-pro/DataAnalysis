@@ -9,9 +9,10 @@ from main.functions.preprocessing import fill_missing_column,find_outliers
 router = APIRouter(prefix="/preprocessing")
 
 
-@router.get("/fill-nulls")
+@router.post("/fill-nulls")
 def fill_nulls(column: str, method: str):
-    df: pd.DataFrame = Depends(get_df)
+    print(column, method)
+    df: pd.DataFrame =get_df()
     df[column] = fill_missing_column(col=df[column], method=method)
     set_df(df)
     return {
@@ -19,19 +20,28 @@ def fill_nulls(column: str, method: str):
     }
 
 @router.get("/detect-outliers")
-def detect_outliers(column: str, method: str, **kwargs):
-    df: pd.DataFrame = Depends(get_df)
-    outliers = find_outliers(series=df[column], method=method, **kwargs)
-    df.drop(outliers, inplace=True)
-    set_df(df)
+def detect_outliers(column: str, method: str):
+    df: pd.DataFrame = get_df()
+    outliers = find_outliers(series=df[column], method=method)  
+    #print(outliers)
     return {
-        "message": f"Removing outliers in column '{column}' using method '{method}'"
+        'data': outliers.tolist(),
+        "message": f"Outliers in column '{column}' using method '{method}'"
     }
 
 @router.get("/remove-outliers")
 def remove_outliers(column: str, method: str, **kwargs):
     pass
 
+@router.get("/duplicates")
+def detect_duplicates(df: pd.DataFrame = Depends(get_df)):
+    duplicates = df[df.duplicated(keep=False)]  # keep=False -> keep all duplicate rows
+    has_duplicates = df.duplicated().sum() > 0
+
+    return {
+        "data": duplicates.to_dict(orient="records"),
+        "message": "Detecting duplicates" if has_duplicates else "No duplicates found"
+    }
 
 @router.get("/drop-duplicates")
 def drop_duplicates(df: pd.DataFrame = Depends(get_df)):

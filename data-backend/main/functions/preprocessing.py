@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def fill_missing_column(col: pd.Series, method: str, custom_value=None) -> pd.Series:
+def fill_missing_column(col: pd.Series, method: str) -> pd.Series:
     """
     Fill missing values in a Pandas Series using various methods.
     
@@ -60,25 +60,26 @@ def find_outliers(series: pd.Series, method: str = "iqr", **kwargs) -> pd.Index:
         IQR = Q3 - Q1
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
-        return series[(series < lower_bound) | (series > upper_bound)].index
+        return series[(series < lower_bound) | (series > upper_bound)]
 
     elif method == "zscore":
         threshold = kwargs.get("threshold", 3)
         z_scores = (series - series.mean()) / series.std()
-        return series[np.abs(z_scores) > threshold].index
+        return series[np.abs(z_scores) > threshold]
 
     elif method == "percentile":
         lower = kwargs.get("lower", 1)
         upper = kwargs.get("upper", 99)
         lower_bound = np.percentile(series, lower)
         upper_bound = np.percentile(series, upper)
-        return series[(series < lower_bound) | (series > upper_bound)].index
+        return series[(series < lower_bound) | (series > upper_bound)]
 
+    #BUG: IsolationForest not defined
     elif method == "isolation":
         contamination = kwargs.get("contamination", 0.05)
         iso = IsolationForest(contamination=contamination, random_state=42)
         preds = iso.fit_predict(series.values.reshape(-1, 1))
-        return series[preds == -1].index
+        return series[preds == -1]
 
     else:
         raise ValueError("Invalid method. Choose from: 'iqr', 'zscore', 'percentile', 'isolation'.")

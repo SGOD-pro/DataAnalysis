@@ -22,6 +22,13 @@ async def message(sid, data):
     callback = WordBufferingCallback(sio, sid)
     streaming_llm = ChatOpenRouter(callbacks=[callback], streaming=True)
 
+#     conversation = ConversationChain(
+#     llm=streaming_llm,
+#     memory=memory,
+#     verbose=True
+# )
+#     memory = ConversationBufferMemory(return_messages=True)
+#     await conversation.apredict(input="Hi, my name is Souvik.")
     try:
         await streaming_llm.ainvoke([
             SystemMessage(content=SYSTEM_PROMPT),

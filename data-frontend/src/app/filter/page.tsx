@@ -49,27 +49,15 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
+import { filterTransformations } from "@/data";
+import useRawDataStore from "@/store/RawData";
 
 interface FilterSectionProps {
   data: any;
   filename: string;
 }
 
-interface FilterRule {
-  id: string;
-  column: string;
-  operator: string;
-  value: string | number | string[] | number[];
-  type:
-    | "numeric"
-    | "categorical"
-    | "text"
-    | "datetime"
-    | "statistical"
-    | "class_balance";
-  preview?: boolean;
-  applied?: boolean;
-}
+
 
 const mockColumns = [
   { name: "age", type: "numeric", min: 22, max: 58 },
@@ -92,113 +80,6 @@ const mockColumns = [
   { name: "feature_correlation", type: "statistical" },
 ];
 
-const operators = {
-  numeric: [
-    { value: "eq", label: "Equal to (==)" },
-    { value: "neq", label: "Not equal to (!=)" },
-    { value: "gt", label: "Greater than (>)" },
-    { value: "gte", label: "Greater than or equal (>=)" },
-    { value: "lt", label: "Less than (<)" },
-    { value: "lte", label: "Less than or equal (<=)" },
-    { value: "between", label: "Between (range)" },
-    { value: "isin", label: "Is in values (isin)" },
-  ],
-  categorical: [
-    { value: "in", label: "Is one of (isin)" },
-    { value: "not_in", label: "Is not one of (!isin)" },
-  ],
-  text: [
-    { value: "contains", label: "Contains pattern" },
-    { value: "not_contains", label: "Does not contain" },
-    { value: "starts_with", label: "Starts with" },
-    { value: "ends_with", label: "Ends with" },
-    { value: "exact", label: "Exact match (==)" },
-  ],
-  datetime: [
-    { value: "recent_years", label: "Recent years" },
-    { value: "recent_months", label: "Recent months" },
-    { value: "date_range", label: "Date range" },
-    { value: "year_eq", label: "Specific year" },
-  ],
-  statistical: [
-    { value: "variance_threshold", label: "Variance threshold" },
-    { value: "correlation_threshold", label: "Correlation threshold" },
-  ],
-  class_balance: [
-    { value: "undersample", label: "Undersampling" },
-    { value: "oversample", label: "Oversampling (SMOTE)" },
-    { value: "stratified", label: "Stratified filtering" },
-  ],
-};
-
-const transformations = [
-  {
-    id: "log",
-    name: "Log Transform",
-    description: "Natural logarithm",
-    category: "mathematical",
-  },
-  {
-    id: "sqrt",
-    name: "Square Root",
-    description: "Square root transformation",
-    category: "mathematical",
-  },
-  {
-    id: "square",
-    name: "Square",
-    description: "Square transformation",
-    category: "mathematical",
-  },
-  {
-    id: "standardize",
-    name: "Standardize",
-    description: "Z-score normalization",
-    category: "scaling",
-  },
-  {
-    id: "normalize",
-    name: "Normalize",
-    description: "Min-max scaling",
-    category: "scaling",
-  },
-  {
-    id: "encode",
-    name: "One-Hot Encode",
-    description: "For categorical variables",
-    category: "encoding",
-  },
-  {
-    id: "label_encode",
-    name: "Label Encoding",
-    description: "Convert categories to numbers",
-    category: "encoding",
-  },
-  {
-    id: "lag",
-    name: "Lag Features",
-    description: "Create lagged variables",
-    category: "timeseries",
-  },
-  {
-    id: "rolling_mean",
-    name: "Rolling Mean",
-    description: "Moving average",
-    category: "timeseries",
-  },
-  {
-    id: "seasonal_decompose",
-    name: "Seasonal Decomposition",
-    description: "Extract trend and seasonality",
-    category: "timeseries",
-  },
-  {
-    id: "differencing",
-    name: "Differencing",
-    description: "Make series stationary",
-    category: "timeseries",
-  },
-];
 
 // Mock filtered data
 const mockFilteredData = [
@@ -249,9 +130,9 @@ const mockFilteredData = [
   },
 ];
 
-export default function FilterSection({ data, filename }: FilterSectionProps) {
+export default function FilterSection() {
   const [filters, setFilters] = useState<FilterRule[]>([]);
-
+  const filename=useRawDataStore(state=>state.filename)
   const [appliedTransformations, setAppliedTransformations] = useState<
     string[]
   >([]);
@@ -940,7 +821,7 @@ export default function FilterSection({ data, filename }: FilterSectionProps) {
                     Mathematical & Scaling Transformations
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {transformations
+                    {filterTransformations
                       .filter(
                         (t) =>
                           t.category === "mathematical" ||
@@ -998,7 +879,7 @@ export default function FilterSection({ data, filename }: FilterSectionProps) {
                     Encoding Transformations
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {transformations
+                    {filterTransformations
                       .filter((t) => t.category === "encoding")
                       .map((transform) => (
                         <Card
@@ -1052,7 +933,7 @@ export default function FilterSection({ data, filename }: FilterSectionProps) {
                     Time Series Transformations
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {transformations
+                    {filterTransformations
                       .filter((t) => t.category === "timeseries")
                       .map((transform) => (
                         <Card
@@ -1282,7 +1163,7 @@ export default function FilterSection({ data, filename }: FilterSectionProps) {
                     ))}
                   {appliedTransformations.map((transform) => (
                     <Badge key={transform} variant="outline">
-                      {transformations.find((t) => t.id === transform)?.name}
+                      {filterTransformations.find((t) => t.id === transform)?.name}
                     </Badge>
                   ))}
                   {appliedGrouping && (

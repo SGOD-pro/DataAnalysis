@@ -43,9 +43,8 @@ def columns_info(df:pd.DataFrame)->dict:
 
 
 
-def stats(df:pd.DataFrame)->dict:
+def stats(df:pd.DataFrame)->list[dict]:
     stats_list=[]
-    print(df.head())
     for col in df.select_dtypes(include=[np.number]).columns:
         stats_list.append({
             "name": col,
@@ -58,8 +57,7 @@ def stats(df:pd.DataFrame)->dict:
             "q1": float(round(df[col].quantile(0.25), 2)),
             "q3": float(round(df[col].quantile(0.75), 2)),
         })
-    print(stats_list)
-    return {"data":stats_list}
+    return stats_list
 
 
 def unique_values(df: pd.DataFrame) -> list[dict]:

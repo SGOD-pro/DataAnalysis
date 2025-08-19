@@ -18,8 +18,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { columnTypes } from "@/data";
+
 import { Badge } from "./ui/badge";
+import useDataOverviewStore from "@/store/DataOverview";
 
 export function ComboboxDemo({
   selectedValues,
@@ -27,7 +28,7 @@ export function ComboboxDemo({
   selectedValues?: (value: string[]) => void;
 }) {
   const [value, setValue] = React.useState<null | string[]>();
-
+  const columnsInfo=useDataOverviewStore(state=>state.columnsInfo);
   return (
     <Popover
       onOpenChange={(e) => {
@@ -46,7 +47,7 @@ export function ComboboxDemo({
           <CommandList>
             <CommandEmpty>No framework found.</CommandEmpty>
             <CommandGroup>
-              {columnTypes.map((data, index) => (
+              {columnsInfo?.map((data, index) => (
                 <CommandItem
                   key={index}
                   value={data.name}

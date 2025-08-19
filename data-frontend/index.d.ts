@@ -15,6 +15,10 @@ interface DataSummary {
   columns: number;
   missing_percentage: number;
 }
+interface RawData {
+  filename: string;
+  data: any[];
+}
 interface ColumnDetails {
   name: string;
   type: string;
@@ -36,4 +40,27 @@ interface DescriptiveStatistics {
 interface UniqueValues {
   name: string;
   unique: number;
+}
+
+interface History {
+  id: string;
+  section: string;
+  operation: string;
+  column: string;
+}
+
+interface FilterRule {
+  id: string;
+  column: string;
+  operator: string;
+  value: string | number | string[] | number[];
+  type:
+    | "numeric"
+    | "categorical"
+    | "text"
+    | "datetime"
+    | "statistical"
+    | "class_balance";
+  preview?: boolean;
+  applied?: boolean;
 }

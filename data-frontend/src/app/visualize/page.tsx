@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -9,34 +9,30 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
+  BarChart3,
+  Download,
+  LineChartIcon,
+  Palette,
+  PieChartIcon,
+  ScatterChartIcon,
+  Settings,
+  AreaChart,
+  CircleDot,
+  Box,
+  Radar,
+} from "lucide-react";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart3,
-  LineChart as LineChartIcon,
-  Zap as ScatterIcon,
-  PieChart as PieChartIcon,
-  Download,
-  Palette,
-  Settings,
-  Box,
-} from "lucide-react";
-import { ChartContainer } from "@mui/x-charts/ChartContainer";
-import { LinePlot } from "@mui/x-charts/LineChart";
-
-import { LineChart } from "@mui/x-charts/LineChart";
-import { BarChart } from "@mui/x-charts/BarChart";
-import { ScatterChart } from "@mui/x-charts/ScatterChart";
-import { PieChart } from "@mui/x-charts/PieChart";
-import { ThemeProvider } from "@mui/material/styles";
-import { Heatmap } from '@mui/x-charts-pro/Heatmap';
-
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme } from "@mui/material/styles";
 const darkTheme = createTheme({
@@ -47,42 +43,25 @@ const darkTheme = createTheme({
 
 const uData = [45, 32, 28, 15];
 const xLabels = ["Engineering", "Marketing", "Sales", "H"];
+import { useId } from "react";
 
-import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-interface VisualizationSectionProps {
-  data: any;
-  filename: string;
-}
-
-const chartTypes = [
-  { id: "bar", name: "Bar Chart", icon: BarChart3 },
-  { id: "line", name: "Line Chart", icon: LineChartIcon },
-  { id: "scatter", name: "Scatter Plot", icon: ScatterIcon },
-  { id: "pie", name: "Pie Chart", icon: PieChartIcon },
-];
-
-const mockColumns = [
-  { name: "age", type: "numeric" },
-  { name: "salary", type: "numeric" },
-  { name: "department", type: "categorical" },
-  { name: "city", type: "categorical" },
-  { name: "experience", type: "numeric" },
-];
-
-// Mock data for different chart types
+import { LineChart } from "@mui/x-charts/LineChart";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { ScatterChart } from "@mui/x-charts/ScatterChart";
+import { PieChart } from "@mui/x-charts/PieChart";
+import { ThemeProvider } from "@mui/material/styles";
+import useDataOverviewStore from "@/store/DataOverview";
+import { Badge } from "@/components/ui/badge";
+import useRawDataStore from "@/store/RawData";
+import { ComboboxDemo } from "@/components/ComboBox";
+import Image from "next/image";
+import ApiService from "@/lib/ApiService";
 
 const lineData = [45000, 52000, 48000, 61000, 55000, 67000];
 const lineLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-
-const mockLineData = [
-  { month: "Jan", revenue: 45000 },
-  { month: "Feb", revenue: 52000 },
-  { month: "Mar", revenue: 48000 },
-  { month: "Apr", revenue: 61000 },
-  { month: "May", revenue: 55000 },
-  { month: "Jun", revenue: 67000 },
-];
 
 export const scatterData = [
   {
@@ -225,438 +204,258 @@ export const scatterData = [
   },
 ];
 
-// Mock box plot data (simulating quartiles)
-const mockBoxPlotData = [
-  {
-    name: "Engineering",
-    min: 35000,
-    q1: 45000,
-    median: 55000,
-    q3: 65000,
-    max: 75000,
-    outliers: [32000, 78000],
-  },
-  {
-    name: "Marketing",
-    min: 32000,
-    q1: 40000,
-    median: 48000,
-    q3: 58000,
-    max: 68000,
-    outliers: [29000, 72000],
-  },
-  {
-    name: "Sales",
-    min: 30000,
-    q1: 38000,
-    median: 45000,
-    q3: 55000,
-    max: 65000,
-    outliers: [28000, 70000],
-  },
+const chartTypes = [
+  { id: "bar", name: "Bar Chart", icon: BarChart3 },
+  { id: "line", name: "Line Chart", icon: LineChartIcon },
+  { id: "scatter", name: "Scatter Plot", icon: ScatterChartIcon },
+  { id: "pie", name: "Pie Chart", icon: PieChartIcon },
 ];
 
-const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--secondary))",
-  "hsl(var(--accent))",
-  "hsl(var(--muted))",
+const charts = [
+  { value: "bar", label: "Bar Chart", Icon: BarChart3 },
+  //{ value: "stacked_bar", label: "Stacked Bar Chart", Icon: LayoutGrid },
+  { value: "line", label: "Line Chart", Icon: LineChartIcon },
+  { value: "area", label: "Area Chart", Icon: AreaChart },
+  { value: "scatter", label: "Scatter Plot", Icon: ScatterChartIcon },
+  { value: "histogram", label: "Histogram", Icon: Box },
+  { value: "boxplot", label: "Box Plot", Icon: Box },
+  { value: "violin", label: "Violin Plot", Icon: CircleDot },
+  { value: "pie", label: "Pie Chart", Icon: PieChartIcon },
+  //{ value: "donut", label: "Donut Chart", Icon: CircleDot },
+  { value: "radar", label: "Radar Chart", Icon: Radar },
 ];
 
-export default function VisualizationSection({
-  data,
-  filename,
-}: VisualizationSectionProps) {
+const renderChart = ({ selectedChart }: { selectedChart: string }) => {
+  const data = useRawDataStore((state) => state.data);
+  switch (selectedChart) {
+    case "bar":
+      return (
+        <BarChart
+          sx={{ height: "100%", width: "100%" }}
+          // dataset={data}
+          series={[{ data: uData, label: "uv", id: "uvId" }]}
+          xAxis={[{ data: xLabels }]}
+          yAxis={[{ width: 50 }]}
+        />
+      );
+    case "line":
+      return (
+        <LineChart
+          sx={{ height: "100%", width: "100%" }}
+          series={[{ data: lineData, label: "pv" }]}
+          xAxis={[{ scaleType: "point", data: lineLabels }]}
+          yAxis={[{ width: 50 }]}
+          margin={50}
+        />
+      );
+    case "scatter":
+      return (
+        <ScatterChart
+          sx={{ height: "100%", width: "100%" }}
+          series={[
+            {
+              label: "Series A",
+              data: scatterData.map((v) => ({ x: v.x1, y: v.y1, id: v.id })),
+            },
+            {
+              label: "Series B",
+              data: scatterData.map((v) => ({ x: v.x1, y: v.y2, id: v.id })),
+            },
+          ]}
+        />
+      );
+    case "pie":
+      return (
+        <PieChart
+          sx={{ height: "100%", width: "100%" }}
+          series={[
+            {
+              data: [
+                { id: 0, value: 10, label: "series A" },
+                { id: 1, value: 15, label: "series B" },
+                { id: 2, value: 20, label: "series C" },
+              ],
+            },
+          ]}
+        />
+      );
+    default:
+      return <div>Select a chart type</div>;
+  }
+};
+const Header = ({
+  func,
+}: {
+  func: (xColumn: string, chartType: string, yColumn?: string[] | null) => void;
+}) => {
   const [selectedChart, setSelectedChart] = useState("bar");
-  const [xVariable, setXVariable] = useState("");
-  const [yVariable, setYVariable] = useState("");
   const [currentGalleryChart, setCurrentGalleryChart] = useState<string | null>(
     null
   );
-
-  const handleExportChart = () => {
-    toast("Chart Export", {
-      description: "Chart will be exported as PNG/SVG (API integration needed)",
-    });
-  };
-
-  const renderChart = () => {
-    switch (selectedChart) {
-      case "bar":
-        return (
-          <BarChart
-            sx={{ height: "100%", width: "100%" }}
-            series={[{ data: uData, label: "uv", id: "uvId" }]}
-            xAxis={[{ data: xLabels }]}
-            yAxis={[{ width: 50 }]}
-          />
-        );
-      case "line":
-        return (
-          <LineChart
-            sx={{ height: "100%", width: "100%" }}
-            series={[{ data: lineData, label: "pv" }]}
-            xAxis={[{ scaleType: "point", data: lineLabels }]}
-            yAxis={[{ width: 50 }]}
-            margin={50}
-          />
-        );
-      case "scatter":
-        return (
-          <ScatterChart
-            sx={{ height: "100%", width: "100%" }}
-            series={[
-              {
-                label: "Series A",
-                data: scatterData.map((v) => ({ x: v.x1, y: v.y1, id: v.id })),
-              },
-              {
-                label: "Series B",
-                data: scatterData.map((v) => ({ x: v.x1, y: v.y2, id: v.id })),
-              },
-            ]}
-          />
-        );
-      case "pie":
-        return (
-          <PieChart
-            sx={{ height: "100%", width: "100%" }}
-            series={[
-              {
-                data: [
-                  { id: 0, value: 10, label: "series A" },
-                  { id: 1, value: 15, label: "series B" },
-                  { id: 2, value: 20, label: "series C" },
-                ],
-              },
-            ]}
-
-          />
-        );
-      default:
-        return <div>Select a chart type</div>;
-    }
-  };
+  const columns = useDataOverviewStore((state) => state.columnsInfo);
+  const [xColumn, setXColumn] = useState("");
+  const [yColumn, setYColumn] = useState<string[] | null>([]);
+  const id = useId();
 
   return (
-    <div className="space-y-6 max-w-5xl transition-all">
-      {/* Header */}
+    <Card className="">
+      <CardContent className="grid grid-cols-4 gap-4">
+        <Select onValueChange={(value) => setXColumn(value)} value={xColumn}>
+          <SelectTrigger className="">
+            <SelectValue placeholder="X Variables" />
+          </SelectTrigger>
+          <SelectContent>
+            {columns?.map((column) => (
+              <SelectItem key={column.name} value={column.name}>
+                <div className="flex items-center gap-3">
+                  <span>{column.name}</span>
+                  <Badge className="block" variant={"secondary"}>
+                    {column.type}
+                  </Badge>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <ComboboxDemo selectedValues={(value) => setYColumn(value)} />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Settings className="w-4 h-4 mr-2" />
+              Configure Chart
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="glass backdrop-blur-2xl">
+            <RadioGroup
+              className="grid-cols-3 transparent"
+              value={selectedChart}
+              onValueChange={setSelectedChart}
+            >
+              {charts.map((item) => (
+                <div
+                  key={`${id}-${item.value}`}
+                  className="border-input has-data-[state=checked]:border-primary/50 relative flex flex-col gap-4 rounded-md border p-3 shadow-xs outline-none"
+                >
+                  <div className="flex justify-between gap-2 ">
+                    <RadioGroupItem
+                      id={`${id}-${item.value}`}
+                      value={item.value}
+                      className="order-1 after:absolute after:inset-0"
+                    />
+                    <item.Icon
+                      className="opacity-60"
+                      size={16}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <Label htmlFor={`${id}-${item.value}`} className="text-xs">
+                    {item.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </PopoverContent>
+        </Popover>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => func(xColumn, selectedChart, yColumn)}
+        >
+          Apply
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+function VisualizePage() {
+  // const [showChart, setShowChart] = useState<{
+  //   xVar: number;
+  //   yVar?: number;
+  //   chart: string;
+  // }>();
+  // const data = useRawDataStore((state) => state.data); //The entire dataset
+  const [chart, setChart] = useState<string | null>("bar");
+  const [isPending, startTransition] = useTransition();
+  const [data, setData] = useState("");
+  async function showChart(xVar: string, chartType: string, yVar?: string[] | null) {
+    setChart(chartType);
+    startTransition(() => {});
+    const res=await new ApiService().get('http://localhost:8000/chart/plot-chart?x=Exam_Score&chart_type=scatter')
+    console.log(res.data)
+    setData(res?.data.chart)
+  }
+  return (
+    <div className="w-full h-full">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Data Visualization</h1>
           <p className="text-muted-foreground mt-1">
-            Interactive charts and plots for {filename}
+            Interactive charts and plots for
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportChart}>
+          <Button variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
             Export Chart
           </Button>
-
-          //TODO: add a save chat option to save the chart to the database
+          {/* //TODO: add a save chat option to save the chart to the database */}
         </div>
       </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
-        {/* Chart Controls */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card className=" data-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Chart Configuration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Chart Type */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Chart Type
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {chartTypes.map((chart) => {
-                    const Icon = chart.icon;
-                    return (
-                      <Button
-                        key={chart.id}
-                        variant={
-                          selectedChart === chart.id ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setSelectedChart(chart.id)}
-                        className="flex flex-col gap-1 h-auto py-3"
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="text-xs">{chart.name}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Variable Selection */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  X Variable
-                </label>
-                <Select value={xVariable} onValueChange={setXVariable}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select X variable" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockColumns.map((col) => (
-                      <SelectItem key={col.name} value={col.name}>
-                        <div className="flex items-center gap-2">
-                          {col.name}
-                          <Badge variant="secondary" className="text-xs">
-                            {col.type}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Y Variable
-                </label>
-                <Select value={yVariable} onValueChange={setYVariable}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Y variable" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockColumns.map((col) => (
-                      <SelectItem key={col.name} value={col.name}>
-                        <div className="flex items-center gap-2">
-                          {col.name}
-                          <Badge variant="secondary" className="text-xs">
-                            {col.type}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button className="w-full" disabled={!xVariable}>
-                Generate Chart
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Chart Display */}
-        <div className="lg:col-span-3">
+      <section className="h-full flex gap-4 flex-col">
+        <Header func={showChart} />
+        <div className="grow">
           <Card className="data-card h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="w-4 h-4" />
-                {chartTypes.find((c) => c.id === selectedChart)?.name ||
-                  "Chart"}
+                {chartTypes.find((c) => c.id === chart)?.name || "Chart"}
               </CardTitle>
               <CardDescription>
                 Interactive visualization of your data
               </CardDescription>
             </CardHeader>
-
-            <CardContent className="h-[80%]">
+            <CardContent>
+              <Image
+              width={1200}
+              height={600}
+                className="w-full h-full object-contain rounded-2xl"
+                alt="chart"
+                src={data}
+                // src={
+                //   `data:image/png;base64,{{${data}}}`
+                // }
+              />
+            </CardContent>
+            {/* <CardContent className="h-[80%]">
               <ThemeProvider theme={darkTheme}>
                 <CssBaseline />
-                {currentGalleryChart ? (
-                  <div>
-                    <div className="mb-4 p-2 bg-muted rounded-lg">
-                      <p className="text-sm font-medium">
-                        Gallery Chart: {currentGalleryChart}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCurrentGalleryChart(null)}
-                        className="mt-2"
-                      >
-                        Back to Configuration
-                      </Button>
-                    </div>
-                    {renderChart()}
-                  </div>
+                {chart ? (
+                  // <div className="h-full">
+                  //   <div className="mb-4 p-2 bg-muted rounded-lg">
+                  //     <p className="text-sm font-medium">
+                  //       Gallery Chart: {chart}
+                  //     </p>
+                  //     <Button
+                  //       variant="outline"
+                  //       size="sm"
+                  //       onClick={() => setChart(null)}
+                  //       className="mt-2"
+                  //     >
+                  //       Back to Configuration
+                  //     </Button>
+                  //   </div>
+                  <>{renderChart({ selectedChart: chart })}</>
                 ) : (
-                  renderChart()
+                  // </div>
+                  <div className="">Set the configurations</div>
                 )}
               </ThemeProvider>
-            </CardContent>
+            </CardContent> */}
           </Card>
         </div>
-      </div>
-
-      {/* Chart Gallery */}
-      <Card className="data-card">
-        <CardHeader>
-          <CardTitle>Chart Gallery</CardTitle>
-          <CardDescription>
-            Quick access to different visualization types
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="distribution" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="distribution">Distribution</TabsTrigger>
-              <TabsTrigger value="relationship">Relationship</TabsTrigger>
-              <TabsTrigger value="composition">Composition</TabsTrigger>
-              <TabsTrigger value="comparison">Comparison</TabsTrigger>
-            </TabsList>
-            <TabsContent value="distribution" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Explore data distributions with histograms, box plots, and
-                density plots
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Histogram", "Box Plot", "Violin Plot", "Density Plot"].map(
-                  (type) => (
-                    <Button
-                      key={type}
-                      variant="outline"
-                      className="h-20 flex flex-col gap-2"
-                      onClick={() => {
-                        if (type === "Box Plot") {
-                          setSelectedChart("boxplot");
-                          setCurrentGalleryChart(type);
-                        } else if (type === "Histogram") {
-                          setSelectedChart("bar");
-                          setCurrentGalleryChart(type);
-                        } else {
-                          setSelectedChart("line");
-                          setCurrentGalleryChart(type);
-                        }
-                        toast("Chart Generated", {
-                          description: `${type} displayed successfully`,
-                        });
-                      }}
-                    >
-                      {type === "Box Plot" ? (
-                        <Box className="w-6 h-6" />
-                      ) : (
-                        <BarChart3 className="w-6 h-6" />
-                      )}
-                      <span className="text-xs">{type}</span>
-                    </Button>
-                  )
-                )}
-              </div>
-            </TabsContent>
-            <TabsContent value="relationship" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Analyze relationships between variables with scatter plots and
-                correlation matrices
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  "Scatter Plot",
-                  "Correlation Matrix",
-                  "Pair Plot",
-                  "Heat Map",
-                ].map((type) => (
-                  <Button
-                    key={type}
-                    variant="outline"
-                    className="h-20 flex flex-col gap-2"
-                    onClick={() => {
-                      if (type === "Scatter Plot") {
-                        setSelectedChart("scatter");
-                        setCurrentGalleryChart(type);
-                      } else if (type === "Correlation Matrix") {
-                        setSelectedChart("line");
-                        setCurrentGalleryChart(type);
-                      } else {
-                        setSelectedChart("bar");
-                        setCurrentGalleryChart(type);
-                      }
-                      toast("Chart Generated", {
-                        description: `${type} displayed successfully`,
-                      });
-                    }}
-                  >
-                    <ScatterIcon className="w-6 h-6" />
-                    <span className="text-xs">{type}</span>
-                  </Button>
-                ))}
-              </div>
-            </TabsContent>
-            <TabsContent value="composition" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Show composition and parts of a whole with pie charts and
-                stacked plots
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Pie Chart", "Donut Chart", "Stacked Bar", "Tree Map"].map(
-                  (type) => (
-                    <Button
-                      key={type}
-                      variant="outline"
-                      className="h-20 flex flex-col gap-2"
-                      onClick={() => {
-                        if (type === "Pie Chart") {
-                          setSelectedChart("pie");
-                          setCurrentGalleryChart(type);
-                        } else if (type === "Stacked Bar") {
-                          setSelectedChart("bar");
-                          setCurrentGalleryChart(type);
-                        } else {
-                          setSelectedChart("pie");
-                          setCurrentGalleryChart(type);
-                        }
-                        toast("Chart Generated", {
-                          description: `${type} displayed successfully`,
-                        });
-                      }}
-                    >
-                      <PieChartIcon className="w-6 h-6" />
-                      <span className="text-xs">{type}</span>
-                    </Button>
-                  )
-                )}
-              </div>
-            </TabsContent>
-            <TabsContent value="comparison" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Compare values across categories with bar charts and line plots
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {["Bar Chart", "Line Chart", "Area Chart", "Radar Chart"].map(
-                  (type) => (
-                    <Button
-                      key={type}
-                      variant="outline"
-                      className="h-20 flex flex-col gap-2"
-                      onClick={() => {
-                        if (type === "Bar Chart") {
-                          setSelectedChart("bar");
-                          setCurrentGalleryChart(type);
-                        } else if (type === "Line Chart") {
-                          setSelectedChart("line");
-                          setCurrentGalleryChart(type);
-                        } else {
-                          setSelectedChart("line");
-                          setCurrentGalleryChart(type);
-                        }
-                        toast("Chart Generated", {
-                          description: `${type} displayed successfully`,
-                        });
-                      }}
-                    >
-                      <LineChartIcon className="w-6 h-6" />
-                      <span className="text-xs">{type}</span>
-                    </Button>
-                  )
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+      </section>
     </div>
   );
 }
+
+export default VisualizePage;

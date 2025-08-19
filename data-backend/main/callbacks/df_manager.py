@@ -4,7 +4,6 @@ import pandas as pd
 from main.redis_utlis.pubsub import notify_update,r
 
 from main.utils.errors import AppException
-from main.config.redis import redis_connection
 
 _df_cache = None  # per-worker cache
 

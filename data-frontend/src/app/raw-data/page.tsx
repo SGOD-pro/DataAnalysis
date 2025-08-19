@@ -15,10 +15,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { default_data as data } from "@/data";
+import useRawDataStore from "@/store/RawData";
 
 function RawData() {
-  const filename = "Demo Data";
+  const filename=useRawDataStore(state=>state.filename)
+  const data=useRawDataStore(state=>state.data)
   return (
     <div className="mx-auto w-4xl">
       <header className="mb-6">
