@@ -119,7 +119,7 @@ class ApiService {
 
   async post<T>(
     endpoint: string,
-    data=null,
+    data:any,
     isMultipart = false,
     showToast = true,
 

@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 
@@ -24,28 +22,35 @@ import useDataOverviewStore from "@/store/DataOverview";
 
 export function ComboboxDemo({
   selectedValues,
+  placeholder = "Select features",
 }: {
-  selectedValues?: (value: string[]) => void;
+  selectedValues?: (value: null | string[]) => void;
+  placeholder?: string;
 }) {
-  const [value, setValue] = React.useState<null | string[]>();
-  const columnsInfo=useDataOverviewStore(state=>state.columnsInfo);
+  const [value, setValue] = React.useState<null | string[]>(null);
+  const columnsInfo = useDataOverviewStore((state) => state.columnsInfo);
+  
+  const setFuncValue = React.useCallback(() => {
+    selectedValues?.(value);
+  }, [value, selectedValues]);
+  
   return (
-    <Popover
-      onOpenChange={(e) => {
-        if (value && value.length != 0 && !e) selectedValues?.(value);
-      }}
-    >
+    <Popover onOpenChange={(e) => !e && setFuncValue()}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="justify-between w-full">
-          {value?.length ? `${value.length + " Selected"}` : "Select features"}
+        <Button
+          variant="outline"
+          role="combobox"
+          className="justify-between w-full"
+        >
+          {value?.length ? `${value.length} Selected` : placeholder}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="p-0">
         <Command>
-          <CommandInput placeholder="Search framework..." className="h-9" />
+          <CommandInput placeholder="Search columns..." className="h-9" />
           <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
+            <CommandEmpty>No columns found.</CommandEmpty>
             <CommandGroup>
               {columnsInfo?.map((data, index) => (
                 <CommandItem
