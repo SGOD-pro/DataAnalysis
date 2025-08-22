@@ -9,7 +9,6 @@ import React, {
   useEffect,
   useRef,
   useState,
-  useTransition,
   useMemo,
 } from "react";
 import ReactMarkdown from "react-markdown";
@@ -66,7 +65,7 @@ const ChatMessage = memo(
       >
         <div
           className={cn(
-            isUser ? "px-4 py-3 rounded-xl shadow-lg glass" : "space-y-4 w-full"
+            isUser ? "px-4 py-3 rounded-xl shadow-lg glass" : "space-y-4 w-full min-h-[40dvvh] pb-40"
           )}
         >
           {isUser ? (
@@ -104,7 +103,6 @@ const MessageList = memo(() => {
     </>
   );
 });
-
 
 const Stream = memo(
   ({
@@ -148,20 +146,21 @@ const Stream = memo(
         socket.off("server_message");
         socket.off("response_end");
       };
-    }, [socket, addMessage]);
+    }, []);
 
     useEffect(() => {
       if (endRef.current) {
         endRef.current.scrollIntoView({ behavior: "smooth" });
       }
-    }, [streamedValue]);
+    }, []);
 
     return (
       <>
-        {streamedValue && (
+        <div className="min-h-[40dvvh] pb-40">
           <ChatMessage isUser={false} content={streamedValue} />
-        )}
-        <div className="p-36" ref={endRef} />
+        </div>
+
+        <div className="p-40" ref={endRef} />
       </>
     );
   }
@@ -169,19 +168,6 @@ const Stream = memo(
 const NewChatBubble = memo(() => {
   const [userInput, setUserInput] = useState("");
   const socket = useSocketStore((s: any) => s.socket);
-
-  // useEffect(() => {
-  //   if (!socket) return;
-  //   socket.on("response_end", () => {
-  //     addMessage({ role: "user", content: userInputRef.current });
-  //     userInputRef.current = "";
-  //     setUserInput("");
-  //   });
-
-  //   return () => {
-  //     socket.off("response_end");
-  //   };
-  // }, [socket]);
 
   const handleChange = useCallback((text: string) => {
     setUserInput(text);
@@ -194,7 +180,9 @@ const NewChatBubble = memo(() => {
   return (
     <>
       {userInput && <ChatMessage isUser content={userInput} />}
-      <Stream socket={socket} userText={userInput} reset={reset} />
+      {userInput && (
+        <Stream socket={socket} userText={userInput} reset={reset} />
+      )}
       <Footer
         onSend={(text: string) => {
           handleChange(text);
@@ -211,7 +199,7 @@ const Footer = memo(({ onSend }: { onSend: (t: string) => void }) => {
   const socket = useSocketStore((s) => s.socket);
   const setSocket = useSocketStore((s) => s.setSocket);
   const isConnected = useSocketStore((s) => s.isConnected);
-      
+
   const setIsConnected = useSocketStore((s) => s.setIsConnected);
   const addMessage = useChatStore((s) => s.addMessage);
   const onSubmit = useCallback(() => {
@@ -258,7 +246,6 @@ const Footer = memo(({ onSend }: { onSend: (t: string) => void }) => {
         },
       });
       setIsConnected(false);
-
     });
     socket.on("welcome", (data: string) => {
       addMessage({ role: "assistant", content: data });

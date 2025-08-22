@@ -9,7 +9,7 @@ def ChatOpenRouter(
     model="moonshotai/kimi-k2:free",
     temperature=0.7,
     streaming=False,
-    tokens=1024,
+    tokens=4096,
     callbacks=None
 ):
     return ChatOpenAI(

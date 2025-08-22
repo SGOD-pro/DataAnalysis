@@ -10,14 +10,16 @@ interface ApiServicesResponse<T> {
   error?: Error | null; // Optional, with a null fallback
   message?: string;
 }
+
+interface RawData {
+  filename: string;
+  data: any[];
+}
+
 interface DataSummary {
   rows: number;
   columns: number;
   missing_percentage: number;
-}
-interface RawData {
-  filename: string;
-  data: any[];
 }
 interface ColumnDetails {
   name: string;
@@ -38,8 +40,8 @@ interface DescriptiveStatistics {
 }
 
 interface UniqueValues {
-  name: string;
-  unique: number;
+  column: string;
+  unique_values: string[] ;
 }
 
 interface History {

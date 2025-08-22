@@ -2,8 +2,8 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 type DataOverviewState = {
-  dataSummary: DataSummary | null;
   columnsInfo: ColumnDetails[] | null;
+  dataSummary: DataSummary | null;
   descriptiveStats: DescriptiveStatistics[] | null;
   uniqueValues: UniqueValues[] | null;
 

@@ -193,7 +193,10 @@
   background: var(--sb-thumb-color);
   border-radius: 6px;
 }
-
+.scrollbar::-webkit-scrollbar-button {
+  display: block; /* ensures they are visible */
+  background: var(--sb-track-color); /* or any color you want */
+}
 @supports not selector(::-webkit-scrollbar) {
   .scrollbar {
     scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);

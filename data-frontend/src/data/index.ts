@@ -47,7 +47,7 @@ export const outlierMethods = [
 ];
 
 export const filterOperators = {
-  numeric: [
+  number: [
     { value: "eq", label: "Equal to (==)" },
     { value: "neq", label: "Not equal to (!=)" },
     { value: "gt", label: "Greater than (>)" },
