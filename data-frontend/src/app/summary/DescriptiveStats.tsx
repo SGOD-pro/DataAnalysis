@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useTransition } from "react";
+import React, { memo } from "react";
 import {
   Table,
   TableBody,
@@ -7,44 +7,36 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CardContent } from "@/components/ui/card";
-import useDataOverviewStore from "@/store/DataOverview";
-import ApiService from "@/lib/ApiService";
-import useInViewOnce from "@/hooks/inview";
+
 import { cn } from "@/lib/utils";
-const apiService = new ApiService();
+import { useApi } from "@/hooks/useSWRZustand";
+
 
 function DescriptiveStats() {
-  const descriptiveStats = useDataOverviewStore(
-    (state) => state.descriptiveStats
-  );
-  const setDescriptiveStats = useDataOverviewStore(
-    (state) => state.setDescriptiveStats
-  );
-  const [isPending, startTransition] = useTransition();
+  const { data, error, isLoading } = useApi("stats");
 
-  const fetchUniqueValues = useCallback(() => {
-    startTransition(() => {
-      if (!descriptiveStats) {
-        apiService.get<DescriptiveStatistics[]>("/stats").then((res) => {
-          if (res?.data) setDescriptiveStats(res.data);
-        });
-      }
-    });
-  }, [descriptiveStats, setDescriptiveStats]);
-  const ref = useInViewOnce<HTMLDivElement>(fetchUniqueValues);
+  // const ref = useInViewOnce<HTMLDivElement>();
+  if (error) {
+    return (
+      <div className="h-full w-full grid place-items-center">
+        <div className="text-muted-foreground h-full grid place-items-center">
+          Error fetching descriptive stats.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <div
         className={cn(
           "h-full w-full top-0 left-0 z-20 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-          isPending ? "h-40" : "h-0"
+          isLoading ? "h-40" : "h-0"
         )}
       ></div>
-      <div ref={ref}>
-        {descriptiveStats ? (
-          <Table >
+      <div>
+        {data ? (
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Variable</TableHead>
@@ -59,8 +51,8 @@ function DescriptiveStats() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.isArray(descriptiveStats) &&
-                descriptiveStats.map((stat) => (
+              {Array.isArray(data) &&
+                data.map((stat) => (
                   <TableRow key={stat.name}>
                     <TableCell className="font-medium">{stat.name}</TableCell>
                     <TableCell>{stat.count.toLocaleString()}</TableCell>

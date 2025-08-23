@@ -40,6 +40,7 @@ def summary(df: pd.DataFrame = Depends(get_df)):
 
 @router.get("/column-info")
 def summary(df: pd.DataFrame = Depends(get_df)):
+    print(df.shape)
     data=columns_info(df)
     return {
         "data": data,

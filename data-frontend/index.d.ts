@@ -23,7 +23,7 @@ interface DataSummary {
 }
 interface ColumnDetails {
   name: string;
-  type: string;
+  type: 'number'|"text"|"categorical"|"datetime";
   nulls: number;
   unique: number;
 }
@@ -66,3 +66,11 @@ interface FilterRule {
   preview?: boolean;
   applied?: boolean;
 }
+
+
+type ApiTypes = {
+  summary: DataSummary;
+  columns: ColumnDetails[];
+  stats: DescriptiveStatistics[];
+  uniqueValues: UniqueValues[];
+};

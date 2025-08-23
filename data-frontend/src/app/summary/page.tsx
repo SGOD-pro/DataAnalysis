@@ -40,6 +40,7 @@ import useDataOverviewStore from "@/store/DataOverview";
 import DataPreprocessing from "./DataPreprocessing";
 import DEscriptiveStsts from "@/app/summary/DescriptiveStats";
 import UniqueValues from "./UniqueValues";
+import { useApi } from "@/hooks/useSWRZustand";
 
 // ----------------------------
 // Helpers
@@ -244,48 +245,12 @@ export default function DataSummary() {
   const router = useRouter();
   const tab = searchParams.get("tab");
 
-  const summaryData = useDataOverviewStore((s) => s.dataSummary);
-  const setDataSummary = useDataOverviewStore((s) => s.setDataSummary);
-
-  const {
-    data: summaryResponse,
-    error: summaryError,
-    isLoading: loadingSummary,
-  } = useSWR<ApiServicesResponse<DataSummary>>(
-    summaryData ? null : "/summary", // 🚫 skip if already in store
-    fetcher<ApiServicesResponse<DataSummary>>,
-    {
-      fallbackData: summaryData
-        ? ({ data: summaryData } as ApiServicesResponse<DataSummary>)
-        : undefined,
-    }
-  );
-
-  // Same for columns
-  const columnsInfoData = useDataOverviewStore((s) => s.columnsInfo);
-  const setColumnsInfo = useDataOverviewStore((s) => s.setColumnsInfo);
-
-  const {
-    data: columnsResponse,
-    error: columnsError,
-    isLoading: loadingColumns,
-  } = useSWR<ApiServicesResponse<ColumnDetails[]>>(
-    columnsInfoData ? null : "/column-info",
-    fetcher<ApiServicesResponse<ColumnDetails[]>>,
-    {
-      fallbackData: columnsInfoData
-        ? ({ data: columnsInfoData } as ApiServicesResponse<ColumnDetails[]>)
-        : undefined,
-    }
-  );
-  useEffect(() => {
-    if (columnsResponse?.data && !columnsInfoData) {
-      setColumnsInfo(columnsResponse.data);
-    }
-    if (summaryResponse?.data && !summaryData) {
-      setDataSummary(summaryResponse.data);
-    }
-  }, [columnsResponse, summaryResponse]);
+ 
+  // Hook calls
+  const { data:summary, error: summaryError, isLoading: loadingSummary } = useApi("summary");
+  const {data:columns, error: columnsError, isLoading: loadingColumns } = useApi("columns");
+console.log(summary)
+  console.log(columnsError);
 
   if (summaryError || columnsError) {
     return (
@@ -298,7 +263,7 @@ export default function DataSummary() {
       </div>
     );
   }
-
+  console.count("render");
   return (
     <div className="mx-auto w-4xl flex justify-center pb-10">
       <div className="space-y-6 w-full">
@@ -336,11 +301,16 @@ export default function DataSummary() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <OverviewCards summary={summaryData!} loading={loadingSummary} />
+            <OverviewCards
+              summary={
+                summary || { rows: 0, columns: 0, missing_percentage: 0 }
+              }
+              loading={loadingSummary}
+            />
 
             <ColumnsTable
-              columns={columnsInfoData!}
-              rows={summaryData?.rows}
+              columns={columns ?? []}
+              rows={summary?.rows}
               loading={loadingColumns}
             />
 

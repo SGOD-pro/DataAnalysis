@@ -1,56 +1,46 @@
 import pickle
 import redis
 import pandas as pd
-from main.redis_utlis.pubsub import notify_update,r
-
+from main.redis_utils.pubsub import notify_update, r
 from main.utils.errors import AppException
 
-_df_cache = None  # per-worker cache
+# local in-memory cache (per worker)
+_cache = {}
 
-
-def get_df():
+def get_df(key: str = "main_df"):
     try:
-        pickled_df = r.get("main_df")
+        if key in _cache:
+            return _cache[key]
+        pickled_df = r.get(key)
         if pickled_df is None:
             return None
         df = pickle.loads(pickled_df)
+        _cache[key] = df
         return df
     except redis.exceptions.ConnectionError as e:
-        print("Redis connection failed:", e)
         raise AppException("Failed to connect to Redis", extra=str(e), status_code=503)
     except Exception as e:
-        print("❌ Cannot get DataFrame from Redis:", e)
-        raise AppException(
-            "Failed to get DataFrame from Redis",
-            extra=str(e),
-            status_code=500
-        )
+        raise AppException("Failed to get DataFrame", extra=str(e), status_code=500)
 
+def set_df(df: pd.DataFrame, key: str = "main_df", channel: str = "df_update"):
 
-def set_df(df: pd.DataFrame):
     try:
-        global _df_cache
-        _df_cache = df
-        r.set("main_df", pickle.dumps(df))
-        notify_update()
+        _cache[key] = df
+        r.set(key, pickle.dumps(df))
+        notify_update(channel)
+
     except redis.exceptions.ConnectionError as e:
-        print("Redis connection failed:", e)
         raise AppException("Failed to connect to Redis", extra=str(e), status_code=503)
     except Exception as e:
-        print(e)
         raise AppException("Failed to set DataFrame", extra=str(e), status_code=500)
 
-
-def refresh_df():
+def refresh_df(key: str = "main_df"):
     """Force reload from Redis (for Pub/Sub events)"""
     try:
-        global _df_cache
-        pickled_df = r.get("main_df")
+        pickled_df = r.get(key)
         if pickled_df:
-            _df_cache = pickle.loads(pickled_df)
+            _cache[key] = pickle.loads(pickled_df)
     except redis.exceptions.ConnectionError as e:
-        print("Redis connection failed:", e)
         raise AppException("Failed to connect to Redis", extra=str(e), status_code=503)
     except Exception as e:
-        print(e)
-        raise AppException("Failed to set DataFrame", extra=str(e), status_code=500)
+        raise AppException("Failed to refresh DataFrame", extra=str(e), status_code=500)

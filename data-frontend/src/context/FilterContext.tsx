@@ -23,8 +23,10 @@ export type FilterRule = {
 
 export type State = {
   filters: FilterRule[];
-  appliedTransformations: string[];
-  filteredData: any[]; // optional: can be populated later from store
+
+  appliedTransformations: { column: string; transformations: string[] }[];
+
+  filteredData: any[];
   originalRows: number;
   selectedGrouping: string[];
   groupingPreview: string;
@@ -43,8 +45,14 @@ type Action =
   | { type: "TOGGLE_PREVIEW"; payload: string }
   | { type: "APPLY_FILTER"; payload: string }
   | { type: "APPLY_FILTERS" }
-  | { type: "SET_TRANSFORMATIONS"; payload: string[] }
-  | { type: "ADD_TRANSFORMATION"; payload: string }
+  | {
+      type: "SET_TRANSFORMATIONS";
+      payload: { column: string; transformations: string[] }[];
+    }
+  | {
+      type: "ADD_TRANSFORMATION";
+      payload: { column: string; transformation: string };
+    }
   | { type: "SET_GROUPING"; payload: string[] }
   | { type: "APPLY_GROUPING" }
   | { type: "SET_GROUPING_PREVIEW"; payload: string };
@@ -109,10 +117,30 @@ const reducer = (state: State, action: Action): State => {
     case "ADD_TRANSFORMATION":
       return {
         ...state,
-        appliedTransformations: [
-          ...state.appliedTransformations,
-          action.payload,
-        ],
+        appliedTransformations: state.appliedTransformations
+          .map((t) =>
+            t.column === action.payload.column
+              ? {
+                  ...t,
+                  transformations: [
+                    ...t.transformations,
+                    action.payload.transformation,
+                  ],
+                }
+              : t
+          )
+          .concat(
+            state.appliedTransformations.some(
+              (t) => t.column === action.payload.column
+            )
+              ? []
+              : [
+                  {
+                    column: action.payload.column,
+                    transformations: [action.payload.transformation],
+                  },
+                ]
+          ),
       };
 
     case "SET_GROUPING":
@@ -256,15 +284,18 @@ export function FilterProvider({
   }, [dispatchAndNotify]);
 
   const setTransformations = useCallback(
-    (t: string[]) => {
+    (t: { column: string; transformations: string[] }[]) => {
       dispatchAndNotify({ type: "SET_TRANSFORMATIONS", payload: t });
     },
     [dispatchAndNotify]
   );
 
   const addTransformation = useCallback(
-    (t: string) => {
-      dispatchAndNotify({ type: "ADD_TRANSFORMATION", payload: t });
+    (column: string, transformation: string) => {
+      dispatchAndNotify({
+        type: "ADD_TRANSFORMATION",
+        payload: { column, transformation }, // ✅ no array
+      });
     },
     [dispatchAndNotify]
   );
